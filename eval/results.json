@@ -1,0 +1,372 @@
+{
+ "summary": {
+  "clips": 14,
+  "verified_clips": 0,
+  "animals": 21,
+  "animals_found": 19,
+  "animal_recall": 0.9047619047619048,
+  "tubes": 35,
+  "false_tubes": 10,
+  "tube_precision": 0.7142857142857143,
+  "presence_precision": 0.842435655994978,
+  "presence_recall": 0.8765512736773351,
+  "empty_correctly_skipped": 0.4949698189134809,
+  "mean_coverage": 0.8152379329975469,
+  "tubes_per_found_animal": 1.5263157894736843,
+  "median_enter_err_s": 0.32,
+  "median_exit_err_s": 0.4800000000000004
+ },
+ "clips": {
+  "badger_cubs": {
+   "frames": 256,
+   "tp": 253,
+   "fp": 0,
+   "fn": 3,
+   "tn": 0,
+   "animals": 2,
+   "found": 2,
+   "coverage": [
+    0.98828125,
+    0.6759776536312849
+   ],
+   "fragments": [
+    1,
+    2
+   ],
+   "enter_err": [
+    0.367,
+    0.367
+   ],
+   "exit_err": [
+    0.0,
+    9.066000000000003
+   ],
+   "tubes": 2,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "badger_snow": {
+   "frames": 51,
+   "tp": 44,
+   "fp": 0,
+   "fn": 7,
+   "tn": 0,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    0.8627450980392157
+   ],
+   "fragments": [
+    2
+   ],
+   "enter_err": [
+    0.5
+   ],
+   "exit_err": [
+    0.0
+   ],
+   "tubes": 2,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "cougar_call": {
+   "frames": 150,
+   "tp": 0,
+   "fp": 0,
+   "fn": 0,
+   "tn": 150,
+   "animals": 0,
+   "found": 0,
+   "coverage": [],
+   "fragments": [],
+   "enter_err": [],
+   "exit_err": [],
+   "tubes": 0,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "coyote_family": {
+   "frames": 256,
+   "tp": 163,
+   "fp": 20,
+   "fn": 0,
+   "tn": 73,
+   "animals": 4,
+   "found": 4,
+   "coverage": [
+    1.0,
+    0.7931034482758621,
+    1.0,
+    1.0
+   ],
+   "fragments": [
+    2,
+    1,
+    1,
+    1
+   ],
+   "enter_err": [
+    0.0,
+    0.3670000000000009,
+    0.0,
+    0.0
+   ],
+   "exit_err": [
+    0.5340000000000003,
+    0.8680000000000021,
+    0.5,
+    0.26699999999999946
+   ],
+   "tubes": 5,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "jaguarundi": {
+   "frames": 150,
+   "tp": 47,
+   "fp": 103,
+   "fn": 0,
+   "tn": 0,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    1.0
+   ],
+   "fragments": [
+    2
+   ],
+   "enter_err": [
+    0.0
+   ],
+   "exit_err": [
+    10.3
+   ],
+   "tubes": 2,
+   "false_tubes": 1,
+   "verified": false
+  },
+  "mallard": {
+   "frames": 100,
+   "tp": 83,
+   "fp": 17,
+   "fn": 0,
+   "tn": 0,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    1.0
+   ],
+   "fragments": [
+    2
+   ],
+   "enter_err": [
+    0.0
+   ],
+   "exit_err": [
+    1.7200000000000006
+   ],
+   "tubes": 2,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "moorhen": {
+   "frames": 100,
+   "tp": 97,
+   "fp": 3,
+   "fn": 0,
+   "tn": 0,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    0.9278350515463918
+   ],
+   "fragments": [
+    2
+   ],
+   "enter_err": [
+    0.32
+   ],
+   "exit_err": [
+    0.0
+   ],
+   "tubes": 3,
+   "false_tubes": 1,
+   "verified": false
+  },
+  "moose": {
+   "frames": 179,
+   "tp": 176,
+   "fp": 0,
+   "fn": 3,
+   "tn": 0,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    0.9832402234636871
+   ],
+   "fragments": [
+    1
+   ],
+   "enter_err": [
+    0.3
+   ],
+   "exit_err": [
+    0.0
+   ],
+   "tubes": 2,
+   "false_tubes": 1,
+   "verified": false
+  },
+  "p22_feeding": {
+   "frames": 256,
+   "tp": 145,
+   "fp": 3,
+   "fn": 108,
+   "tn": 0,
+   "animals": 3,
+   "found": 2,
+   "coverage": [
+    1.0,
+    0.17708333333333334,
+    0.6813186813186813
+   ],
+   "fragments": [
+    1,
+    2
+   ],
+   "enter_err": [
+    0.0,
+    1.9349999999999952
+   ],
+   "exit_err": [
+    6.407,
+    6.1059999999999945
+   ],
+   "tubes": 3,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "red_fox": {
+   "frames": 60,
+   "tp": 48,
+   "fp": 12,
+   "fn": 0,
+   "tn": 0,
+   "animals": 2,
+   "found": 2,
+   "coverage": [
+    0.5333333333333333,
+    1.0
+   ],
+   "fragments": [
+    1,
+    1
+   ],
+   "enter_err": [
+    0.0,
+    2.72
+   ],
+   "exit_err": [
+    0.32000000000000006,
+    0.0
+   ],
+   "tubes": 2,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "roe_deer": {
+   "frames": 60,
+   "tp": 57,
+   "fp": 0,
+   "fn": 3,
+   "tn": 0,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    0.95
+   ],
+   "fragments": [
+    1
+   ],
+   "enter_err": [
+    0.32
+   ],
+   "exit_err": [
+    0.0
+   ],
+   "tubes": 1,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "roe_deer_male": {
+   "frames": 60,
+   "tp": 0,
+   "fp": 0,
+   "fn": 60,
+   "tn": 0,
+   "animals": 1,
+   "found": 0,
+   "coverage": [
+    0.0
+   ],
+   "fragments": [],
+   "enter_err": [],
+   "exit_err": [],
+   "tubes": 0,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "small_mammals": {
+   "frames": 250,
+   "tp": 209,
+   "fp": 13,
+   "fn": 5,
+   "tn": 23,
+   "animals": 2,
+   "found": 2,
+   "coverage": [
+    0.8895027624309392,
+    0.7575757575757576
+   ],
+   "fragments": [
+    1,
+    1
+   ],
+   "enter_err": [
+    0.68,
+    0.4799999999999969
+   ],
+   "exit_err": [
+    0.120000000000001,
+    0.4800000000000004
+   ],
+   "tubes": 2,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "wild_boars": {
+   "frames": 100,
+   "tp": 20,
+   "fp": 80,
+   "fn": 0,
+   "tn": 0,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    0.9
+   ],
+   "fragments": [
+    4
+   ],
+   "enter_err": [
+    0.0
+   ],
+   "exit_err": [
+    8.0
+   ],
+   "tubes": 9,
+   "false_tubes": 7,
+   "verified": false
+  }
+ }
+}

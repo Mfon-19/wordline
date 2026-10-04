@@ -1,0 +1,83 @@
+{
+ "clip": "small_mammals",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "Two recordings joined. Picture sits inside black borders.",
+ "animals": [
+  {
+   "note": "small mammal at left",
+   "points": [
+    [
+     0.8,
+     0.2,
+     0.51
+    ],
+    [
+     3.4,
+     0.21,
+     0.51
+    ],
+    [
+     6.0,
+     0.3,
+     0.5
+    ],
+    [
+     8.5,
+     0.26,
+     0.49
+    ],
+    [
+     12.0,
+     0.31,
+     0.49
+    ],
+    [
+     15.4,
+     0.34,
+     0.47
+    ],
+    [
+     18.0,
+     0.33,
+     0.5
+    ],
+    [
+     18.8,
+     0.12,
+     0.58
+    ]
+   ]
+  },
+  {
+   "note": "small mammal crossing from right",
+   "points": [
+    [
+     20.4,
+     0.95,
+     0.5
+    ],
+    [
+     21.4,
+     0.74,
+     0.58
+    ],
+    [
+     22.3,
+     0.66,
+     0.58
+    ],
+    [
+     23.1,
+     0.68,
+     0.57
+    ],
+    [
+     23.6,
+     0.68,
+     0.57
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,48 @@
+{
+ "clip": "moose",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "Edited video with a caption, not raw camera-trap footage.",
+ "animals": [
+  {
+   "note": "moose",
+   "points": [
+    [
+     0,
+     0.45,
+     0.4
+    ],
+    [
+     5,
+     0.45,
+     0.38
+    ],
+    [
+     10.1,
+     0.5,
+     0.42
+    ],
+    [
+     12.7,
+     0.45,
+     0.58
+    ],
+    [
+     15.2,
+     0.55,
+     0.6
+    ],
+    [
+     16.5,
+     0.65,
+     0.5
+    ],
+    [
+     17.8,
+     0.8,
+     0.65
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,53 @@
+{
+ "clip": "red_fox",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "Fox leaves at the left, then one appears at the bottom edge; may be the same animal.",
+ "animals": [
+  {
+   "note": "fox leaving at left",
+   "points": [
+    [
+     0.0,
+     0.08,
+     0.8
+    ],
+    [
+     0.9,
+     0.04,
+     0.9
+    ],
+    [
+     1.4,
+     0.02,
+     0.97
+    ]
+   ]
+  },
+  {
+   "note": "fox at bottom edge",
+   "points": [
+    [
+     2.7,
+     0.34,
+     0.98
+    ],
+    [
+     3.4,
+     0.36,
+     0.96
+    ],
+    [
+     4.4,
+     0.36,
+     0.93
+    ],
+    [
+     5.9,
+     0.36,
+     0.93
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+{
+ "clip": "roe_deer_male",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "Deer is small and dim at the far left.",
+ "animals": [
+  {
+   "note": "roe deer",
+   "points": [
+    [
+     0.0,
+     0.09,
+     0.41
+    ],
+    [
+     3.9,
+     0.09,
+     0.41
+    ],
+    [
+     4.7,
+     0.14,
+     0.42
+    ],
+    [
+     5.9,
+     0.13,
+     0.42
+    ]
+   ]
+  }
+ ]
+}

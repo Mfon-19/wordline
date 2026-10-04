@@ -1,0 +1,24 @@
+{
+  "model": {
+    "path": "models/yolox_s.onnx",
+    "url": "https://huggingface.co/opencv/object_detection_yolox/resolve/main/object_detection_yolox_2022nov.onnx",
+    "licence": "Apache-2.0",
+    "source": "https://github.com/opencv/opencv_zoo/tree/main/models/object_detection_yolox"
+  },
+  "clips": {
+    "coyote_family": "Silver_Lake_Coyote_Family_(32576707436).webm",
+    "badger_cubs": "Badger_family_with_3_cubs_in_Bulgaria.webm",
+    "roe_deer": "Capreolus_capreolus-roe_deer-Bulgaria-female_VP8.webm",
+    "red_fox": "Vulpes_vulpes-red_fox-Bulgaria-2_VP8.webm",
+    "jaguarundi": "Jaguarundi-santa-fe-do-sul-brazil-camera-trap.webm",
+    "wild_boars": "Sus_scrofa-wild_boars-Bulgaria_VP8.webm",
+    "roe_deer_male": "Capreolus_capreolus-roe_deer-Bulgaria-male_VP8.webm",
+    "mallard": "Anas_platyrhynchos-mallard-Bulgaria.webm",
+    "moorhen": "Gallinula_chloropus-Common_moorhen_VP8.webm",
+    "badger_snow": "Badger_in_the_snow.webm",
+    "moose": "Moose_lachryphagy.webm",
+    "p22_feeding": "P-22_Feeding_(32435243406).webm",
+    "cougar_call": "Female_Cougar_Estrous_Call.webm",
+    "small_mammals": "Optimising-Camera-Traps-for-Monitoring-Small-Mammals-pone.0067940.s002.ogv"
+  }
+}

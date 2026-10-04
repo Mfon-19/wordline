@@ -3,7 +3,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-const CLIPS = ["coyote_family", "badger_cubs", "roe_deer", "red_fox"];
 const LEN = 3.0;   // block length along time
 const WID = 1.6;   // block width (image x)
 const COLORS = ["#ffb454", "#5ccfe6", "#bae67e", "#f28779", "#d4bfff", "#ffd580", "#73d0ff", "#95e6cb"];
@@ -267,7 +266,8 @@ function tick(ms) {
   requestAnimationFrame(tick);
 }
 
-for (const c of CLIPS) $("clip").add(new Option(c.replace("_", " "), c));
+const CLIPS = await (await fetch("data/index.json")).json();
+for (const c of CLIPS) $("clip").add(new Option(c.replaceAll("_", " "), c));
 $("clip").onchange = (e) => load(e.target.value);
 $("scrub").oninput = (e) => setFrame(+e.target.value);
 $("haze").oninput = (e) => { volumeMaterial.uniforms.haze.value = +e.target.value; };
@@ -275,5 +275,6 @@ $("play").onclick = () => { playing = !playing; $("play").textContent = playing 
 new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
 requestAnimationFrame(tick);
-load(CLIPS[0]);
+load(CLIPS.includes("coyote_family") ? "coyote_family" : CLIPS[0]);
+$("clip").value = data ? $("clip").value : "coyote_family";
 window.worldline = { get data() { return data; }, setFrame, select };

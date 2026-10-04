@@ -24,6 +24,7 @@ ATLAS_W = 256      # width of each frame stored for the browser block
 MAX_FRAMES = 256   # frames kept along the time axis
 MAX_FPS = 10
 RING = 48          # points per outline
+GRAB_MAX = 128     # longest side GrabCut is run at
 CONF = 0.3         # detector confidence threshold
 IOU_MATCH = 0.2    # overlap needed to attach a detection to a track
 MAX_MISS = 8       # sampled frames a track survives on optical flow alone
@@ -257,6 +258,10 @@ def outline(frame, box):
     ellipse = a * b / np.sqrt((b * np.cos(angles)) ** 2 + (a * np.sin(angles)) ** 2)
     if crop.shape[0] < 12 or crop.shape[1] < 12:
         return mid, ellipse
+    k = min(1.0, GRAB_MAX / max(crop.shape[:2]))  # GrabCut cost grows with area; work on a small copy
+    if k < 1.0:
+        crop = cv2.resize(crop, None, fx=k, fy=k, interpolation=cv2.INTER_AREA)
+        rect = tuple(max(int(v * k), 1) for v in rect)
     mask = np.zeros(crop.shape[:2], np.uint8)
     try:
         cv2.grabCut(crop, mask, rect, np.zeros((1, 65)), np.zeros((1, 65)), 2, cv2.GC_INIT_WITH_RECT)
@@ -267,12 +272,12 @@ def outline(frame, box):
     contours, _ = cv2.findContours(fg, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if not contours:
         return mid, ellipse
-    c = max(contours, key=cv2.contourArea)
-    if not 0.15 < cv2.contourArea(c) / (w * h + 1e-9) < 0.95:
+    c = max(contours, key=cv2.contourArea).reshape(-1, 2) / k
+    if not 0.15 < cv2.contourArea(c.astype(np.float32)) / (w * h + 1e-9) < 0.95:
         return mid, ellipse
-    m = cv2.moments(c)
+    m = cv2.moments(c.astype(np.float32))
     mid = np.array([m["m10"] / m["m00"] + x0, m["m01"] / m["m00"] + y0])
-    d = c.reshape(-1, 2) + (x0, y0) - mid
+    d = c + (x0, y0) - mid
     bins = (np.arctan2(d[:, 1], d[:, 0]) % (2 * np.pi) / (2 * np.pi) * RING).astype(int) % RING
     radii = np.zeros(RING)
     np.maximum.at(radii, bins, np.hypot(d[:, 0], d[:, 1]))
@@ -341,6 +346,8 @@ def run(path, out_dir=None):
                   "raw_tracks": len(raw), "total_s": round(time.time() - t_start, 1)},
     }
     (out_dir / "worldline.json").write_text(json.dumps(meta, separators=(",", ":")))
+    done = sorted(p.parent.name for p in out_dir.parent.glob("*/worldline.json"))
+    (out_dir.parent / "index.json").write_text(json.dumps(done))
     return meta
 
 

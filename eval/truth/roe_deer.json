@@ -1,0 +1,28 @@
+{
+ "clip": "roe_deer",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "",
+ "animals": [
+  {
+   "note": "roe deer",
+   "points": [
+    [
+     0.0,
+     0.66,
+     0.5
+    ],
+    [
+     3.0,
+     0.67,
+     0.5
+    ],
+    [
+     5.9,
+     0.68,
+     0.49
+    ]
+   ]
+  }
+ ]
+}

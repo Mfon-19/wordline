@@ -1,0 +1,58 @@
+{
+ "clip": "jaguarundi",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "Empty after the animal leaves at about 4.6 s.",
+ "animals": [
+  {
+   "note": "jaguarundi walking left",
+   "points": [
+    [
+     0.0,
+     0.52,
+     0.72
+    ],
+    [
+     0.6,
+     0.5,
+     0.72
+    ],
+    [
+     1.2,
+     0.52,
+     0.75
+    ],
+    [
+     1.8,
+     0.45,
+     0.72
+    ],
+    [
+     2.4,
+     0.35,
+     0.72
+    ],
+    [
+     3.1,
+     0.3,
+     0.75
+    ],
+    [
+     3.7,
+     0.27,
+     0.75
+    ],
+    [
+     4.3,
+     0.25,
+     0.78
+    ],
+    [
+     4.6,
+     0.24,
+     0.78
+    ]
+   ]
+  }
+ ]
+}

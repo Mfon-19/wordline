@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worldline labels</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  main { grid-template-columns: 1fr 320px; }
+  #stage { display: grid; place-items: center; padding: 12px; }
+  #frame { max-width: 100%; max-height: 100%; image-rendering: auto; cursor: crosshair; border: 1px solid var(--line); }
+  aside { display: grid; gap: 12px; align-content: start; }
+  aside button { width: auto; }
+  #animals li { border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 6px; padding: 8px 10px; cursor: pointer; }
+  #animals li.on { background: #1b2028; border-color: var(--c); }
+  #animals li b, #animals li small { display: block; }
+  #animals li small { color: var(--dim); white-space: normal; }
+  textarea, input[type=text] { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px; font: inherit; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .help { color: var(--dim); font-size: 12px; margin: 0; }
+  #saved { color: var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Worldline labels</h1>
+  <select id="clip" aria-label="Clip"></select>
+  <label class="knob"><input id="verified" type="checkbox"> I have checked this clip</label>
+  <button id="save" style="width:auto">Save</button>
+  <span id="saved"></span>
+  <span id="status"></span>
+</header>
+<main>
+  <div id="stage"><canvas id="frame"></canvas></div>
+  <aside>
+    <p class="help">Each animal visit is a few points. It counts as present from its first point to its last.
+      Pick an animal, move to a frame, click its body to add or move a point.
+      Keys: ← → step, Shift+← → jump 10, X delete the point at this frame.</p>
+    <div>
+      <h2>Animal visits</h2>
+      <ol id="animals" style="list-style:none;margin:0;padding:0;display:grid;gap:8px"></ol>
+    </div>
+    <div class="row">
+      <button id="add">Add visit</button>
+      <button id="del">Delete visit</button>
+    </div>
+    <label>Note for selected visit <input id="anote" type="text"></label>
+    <label>Note for this clip <textarea id="cnote" rows="3"></textarea></label>
+  </aside>
+</main>
+<footer>
+  <button id="play" aria-label="Play or pause">▶</button>
+  <div id="timeline">
+    <div id="bars"></div>
+    <input id="scrub" type="range" min="0" max="1" step="1" value="0" aria-label="Time">
+  </div>
+  <output id="clock">0.0 s</output>
+</footer>
+<script type="module" src="label.js"></script>
+</body>
+</html>

@@ -6,3 +6,4 @@ web/data/
 models/*.onnx
 clips/*.webm
 .claude/
+clips/*.ogv

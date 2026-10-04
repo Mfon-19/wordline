@@ -1,0 +1,23 @@
+{
+ "clip": "wild_boars",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "I could not make out the boars with confidence. Needs a person.",
+ "animals": [
+  {
+   "note": "dark shapes on the far bank; unsure",
+   "points": [
+    [
+     0.0,
+     0.65,
+     0.47
+    ],
+    [
+     1.9,
+     0.68,
+     0.47
+    ]
+   ]
+  }
+ ]
+}

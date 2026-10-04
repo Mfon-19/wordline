@@ -1,0 +1,38 @@
+{
+ "clip": "badger_snow",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "",
+ "animals": [
+  {
+   "note": "badger",
+   "points": [
+    [
+     0.0,
+     0.52,
+     0.5
+    ],
+    [
+     1.1,
+     0.6,
+     0.48
+    ],
+    [
+     2.2,
+     0.58,
+     0.48
+    ],
+    [
+     3.3,
+     0.55,
+     0.5
+    ],
+    [
+     5.0,
+     0.52,
+     0.5
+    ]
+   ]
+  }
+ ]
+}

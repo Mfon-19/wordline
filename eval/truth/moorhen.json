@@ -1,0 +1,63 @@
+{
+ "clip": "moorhen",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "",
+ "animals": [
+  {
+   "note": "moorhen at bottom left",
+   "points": [
+    [
+     0.3,
+     0.3,
+     0.96
+    ],
+    [
+     0.6,
+     0.3,
+     0.95
+    ],
+    [
+     1.9,
+     0.25,
+     0.93
+    ],
+    [
+     2.6,
+     0.22,
+     0.92
+    ],
+    [
+     3.3,
+     0.18,
+     0.92
+    ],
+    [
+     5.9,
+     0.18,
+     0.92
+    ],
+    [
+     6.6,
+     0.17,
+     0.9
+    ],
+    [
+     7.2,
+     0.21,
+     0.88
+    ],
+    [
+     8.5,
+     0.22,
+     0.88
+    ],
+    [
+     9.9,
+     0.24,
+     0.9
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,98 @@
+{
+ "clip": "badger_cubs",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "Title says three cubs; I could only make out one beside the adult.",
+ "animals": [
+  {
+   "note": "adult badger",
+   "points": [
+    [
+     0,
+     0.83,
+     0.68
+    ],
+    [
+     5,
+     0.83,
+     0.66
+    ],
+    [
+     9.3,
+     0.86,
+     0.68
+    ],
+    [
+     12.4,
+     0.8,
+     0.7
+    ],
+    [
+     15.4,
+     0.78,
+     0.72
+    ],
+    [
+     19.7,
+     0.8,
+     0.72
+    ],
+    [
+     22.7,
+     0.77,
+     0.7
+    ],
+    [
+     26,
+     0.75,
+     0.7
+    ],
+    [
+     30,
+     0.76,
+     0.72
+    ]
+   ]
+  },
+  {
+   "note": "cub, left of the adult; unsure when it disappears",
+   "points": [
+    [
+     0,
+     0.67,
+     0.7
+    ],
+    [
+     5,
+     0.67,
+     0.7
+    ],
+    [
+     9.3,
+     0.65,
+     0.72
+    ],
+    [
+     12.4,
+     0.67,
+     0.68
+    ],
+    [
+     15.4,
+     0.66,
+     0.72
+    ],
+    [
+     19.7,
+     0.66,
+     0.74
+    ],
+    [
+     21.0,
+     0.66,
+     0.74
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,148 @@
+{
+ "clip": "coyote_family",
+ "verified": false,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-3 s; not yet checked by a person.",
+ "note": "Several recordings joined. Entry/exit times are rough.",
+ "animals": [
+  {
+   "note": "coyote, first recording",
+   "points": [
+    [
+     0.0,
+     0.45,
+     0.8
+    ],
+    [
+     1.0,
+     0.44,
+     0.72
+    ],
+    [
+     2.2,
+     0.42,
+     0.68
+    ],
+    [
+     3.3,
+     0.44,
+     0.72
+    ],
+    [
+     4.0,
+     0.45,
+     0.72
+    ]
+   ]
+  },
+  {
+   "note": "coyote walking left",
+   "points": [
+    [
+     10.5,
+     0.66,
+     0.68
+    ],
+    [
+     11.0,
+     0.62,
+     0.67
+    ],
+    [
+     12.2,
+     0.63,
+     0.66
+    ],
+    [
+     13.3,
+     0.57,
+     0.68
+    ],
+    [
+     14.5,
+     0.48,
+     0.68
+    ],
+    [
+     15.6,
+     0.38,
+     0.66
+    ],
+    [
+     16.6,
+     0.3,
+     0.72
+    ],
+    [
+     17.8,
+     0.36,
+     0.73
+    ]
+   ]
+  },
+  {
+   "note": "coyote walking right; exit time is a guess",
+   "points": [
+    [
+     18.9,
+     0.28,
+     0.72
+    ],
+    [
+     20.1,
+     0.42,
+     0.7
+    ],
+    [
+     20.6,
+     0.5,
+     0.7
+    ]
+   ]
+  },
+  {
+   "note": "coyote close to camera, bottom edge; may be more than one animal",
+   "points": [
+    [
+     22.2,
+     0.62,
+     0.88
+    ],
+    [
+     23.4,
+     0.65,
+     0.9
+    ],
+    [
+     24.5,
+     0.62,
+     0.88
+    ],
+    [
+     25.6,
+     0.48,
+     0.93
+    ],
+    [
+     26.8,
+     0.55,
+     0.97
+    ],
+    [
+     27.8,
+     0.55,
+     0.92
+    ],
+    [
+     28.9,
+     0.55,
+     0.9
+    ],
+    [
+     29.6,
+     0.55,
+     0.9
+    ]
+   ]
+  }
+ ]
+}
