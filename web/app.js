@@ -214,7 +214,8 @@ function buildPanels() {
     const when = document.createElement("small");
     when.textContent = `In at ${tr.enter_s.toFixed(1)} s, stayed ${tr.dwell_s.toFixed(1)} s`;
     const more = document.createElement("small");
-    more.textContent = `Moved ${(tr.path_len * 100).toFixed(0)}% of frame width · model guess: ${guess}`;
+    more.textContent = `Moved ${(tr.path_len * 100).toFixed(0)}% of frame width · ` +
+      (tr.found_by === "motion" ? "found by motion only" : `model guess: ${guess}`);
     li.append(title, when, more);
     li.onclick = () => select(ti);
     list.append(li);
