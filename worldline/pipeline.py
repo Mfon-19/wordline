@@ -32,8 +32,11 @@ MIN_DETS = 3       # detections that make a track detector-confirmed
 MIN_MOTION = 5     # confirmed frames a motion-only track needs
 MIN_TRAVEL = 0.15  # start-to-end distance (frame widths) a motion-only track needs
 FG_THRESH = 25     # grey-level difference from the background that counts as change
+NOISE_K = 6.0      # ...or this many times the pixel's own usual flicker, if larger
 MIN_BLOB = 0.0006  # smallest moving region, as a share of the frame
 ALIVE_FG = 0.05    # share of a track's box that must be changing for motion to keep it alive
+STALL = 15         # frames a detected track may be kept alive by motion without moving or being re-detected
+STALL_MOVE = 0.05  # ...where moving means this far (frame widths) from where it was last detected
 MIN_FG = 0.02      # below this mean share of changed pixels, and
 MIN_PATH = 0.05    # below this travel (frame widths), a track is scenery (a rock, a log)
 MERGE_GAP = 10     # sampled frames a tube may vanish for and still be joined up
@@ -93,11 +96,22 @@ def read_clip(path):
 
 
 def foreground(grays):
-    """Per-frame mask of pixels that differ from the clip's median background."""
+    """Two per-frame masks of pixels that differ from the clip's median background.
+
+    loose: a fixed threshold. Used to tell whether a known animal's box is still changing.
+    strict: the threshold also scales with each pixel's own flicker over the clip, so water,
+    reeds and leaves need a bigger change to count. Used to start tracks from motion alone.
+    """
     blur = np.array([cv2.GaussianBlur(g, (5, 5), 0) for g in grays])
     bg = np.median(blur, axis=0).astype(np.uint8)
+    diff = np.array([cv2.absdiff(b, bg) for b in blur])
+    noise = 1.4826 * np.median(diff, axis=0)  # robust spread of each pixel over time
     kernel = np.ones((3, 3), np.uint8)
-    return [cv2.morphologyEx((cv2.absdiff(b, bg) > FG_THRESH).astype(np.uint8), cv2.MORPH_OPEN, kernel) for b in blur]
+
+    def masks(thresh):
+        return [cv2.morphologyEx((d > thresh).astype(np.uint8), cv2.MORPH_OPEN, kernel) for d in diff]
+
+    return masks(FG_THRESH), masks(np.maximum(FG_THRESH, NOISE_K * noise))
 
 
 def find_cuts(grays):
@@ -132,12 +146,12 @@ def flow_shift(prev, cur, box):
     return np.median((nxt - pts)[good].reshape(-1, 2), axis=0)
 
 
-def track_clip(work, grays, fg, cuts, det):
+def track_clip(work, grays, fg, fg_strict, cuts, det):
     """Detect and follow objects. Returns raw tracks, detector time (ms), people skipped."""
     live, done, det_ms, people = [], [], 0.0, 0
 
     def new_track(f, box, hit, conf=None, label=None):
-        live.append({"start": f, "box": np.asarray(box, float), "miss": 0, "hit": hit, "motion_born": hit == "m",
+        live.append({"start": f, "box": np.asarray(box, float), "miss": 0, "hit": hit, "motion_born": hit == "m", "anchor": centre(box), "stall": 0,
                      "conf": [conf] if conf else [], "guesses": Counter([label] if label else []),
                      "boxes": [], "fg": [], "src": ""})
 
@@ -168,6 +182,7 @@ def track_clip(work, grays, fg, cuts, det):
             used.add(di)
             box, conf, label = dets[di]
             tr["box"], tr["miss"], tr["hit"] = box.astype(float), 0, "d"
+            tr["anchor"], tr["stall"] = centre(tr["box"]), 0
             tr["conf"].append(conf)
             tr["guesses"][label] += 1
         for di, (box, conf, label) in enumerate(dets):
@@ -175,14 +190,22 @@ def track_clip(work, grays, fg, cuts, det):
                 new_track(f, box, "d", conf, label)
 
         # 3. motion the detector did not explain keeps a track alive, or starts a candidate one
-        for blob in motion_blobs(fg[f]):
+        for blob in motion_blobs(fg_strict[f]):
             owner = next((tr for tr in live if inside(blob, tr["box"]) or iou(blob, tr["box"]) > 0.1), None)
             if owner is None:
                 new_track(f, blob, "m")
-            elif not owner["hit"] and (owner["motion_born"] or share(fg[f], owner["box"]) >= ALIVE_FG):
-                owner["miss"], owner["hit"] = 0, "m"
-                if owner["motion_born"]:
-                    owner["box"] = blob
+            elif owner["motion_born"] and not owner["hit"]:
+                owner["box"], owner["miss"], owner["hit"] = blob, 0, "m"
+        for tr in live:
+            if tr["hit"] or tr["motion_born"] or share(fg[f], tr["box"]) < ALIVE_FG:
+                continue
+            # a detected animal whose box is still changing stays alive, but not for long if it
+            # is going nowhere: a parked box that only flickers is usually leaves, not an animal
+            if np.linalg.norm(centre(tr["box"]) - tr["anchor"]) > STALL_MOVE * frame.shape[1]:
+                tr["anchor"], tr["stall"] = centre(tr["box"]), 0
+            tr["stall"] += 1
+            if tr["stall"] <= STALL:
+                tr["miss"], tr["hit"] = 0, "m"
 
         # 4. log this frame; retire tracks nothing has confirmed for a while
         still = []
@@ -303,7 +326,8 @@ def run(path, out_dir=None):
     fps, total, times, work, small_frames = read_clip(path)
     grays = [cv2.cvtColor(w, cv2.COLOR_BGR2GRAY) for w in work]
     cuts = find_cuts(grays)
-    raw, det_ms, people_ignored = track_clip(work, grays, foreground(grays), cuts, Detector())
+    fg, fg_strict = foreground(grays)
+    raw, det_ms, people_ignored = track_clip(work, grays, fg, fg_strict, cuts, Detector())
 
     T = len(times)
     H, W = work[0].shape[:2]
