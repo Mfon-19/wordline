@@ -17,7 +17,8 @@
      0.6,
      0.6
     ]
-   ]
+   ],
+   "species": "mountain lion"
   },
   {
    "note": "mountain lion, second recording",
@@ -37,7 +38,8 @@
      0.5,
      0.5
     ]
-   ]
+   ],
+   "species": "mountain lion"
   },
   {
    "note": "mountain lion, third recording",
@@ -52,7 +54,8 @@
      0.5,
      0.55
     ]
-   ]
+   ],
+   "species": "mountain lion"
   }
  ]
 }

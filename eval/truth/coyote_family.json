@@ -32,7 +32,8 @@
      0.45,
      0.72
     ]
-   ]
+   ],
+   "species": "coyote"
   },
   {
    "note": "coyote walking left",
@@ -77,7 +78,8 @@
      0.36,
      0.73
     ]
-   ]
+   ],
+   "species": "coyote"
   },
   {
    "note": "coyote walking right; exit time is a guess",
@@ -97,7 +99,8 @@
      0.5,
      0.7
     ]
-   ]
+   ],
+   "species": "coyote"
   },
   {
    "note": "coyote close to camera, bottom edge; may be more than one animal",
@@ -142,7 +145,8 @@
      0.55,
      0.9
     ]
-   ]
+   ],
+   "species": "coyote"
   }
  ]
 }

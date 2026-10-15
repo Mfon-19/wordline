@@ -22,7 +22,8 @@
      0.02,
      0.97
     ]
-   ]
+   ],
+   "species": "red fox"
   },
   {
    "note": "fox at bottom edge",
@@ -47,7 +48,8 @@
      0.36,
      0.93
     ]
-   ]
+   ],
+   "species": "red fox"
   }
  ]
 }
