@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Worldline: one Graviton EC2 instance running the server in Docker, reachable only through
+  CloudFront (HTTPS). The app bundle is pulled from a private S3 bucket by the instance role;
+  container logs go to CloudWatch. No SSH: administer with SSM Session Manager.
+
+Parameters:
+  BundleBucket:
+    Type: String
+    Description: Private S3 bucket holding the app bundle (created by deploy.sh)
+  BundleKey:
+    Type: String
+    Description: S3 key of the app bundle (tar.gz)
+  InstanceType:
+    Type: String
+    Default: t4g.large
+    AllowedValues: [t4g.large, t4g.xlarge, m7g.large, m8g.large]
+  ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+  CloudFrontPrefixList:
+    Type: String
+    Description: Managed prefix list com.amazonaws.global.cloudfront.origin-facing
+
+Resources:
+  Logs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /worldline/server
+      RetentionInDays: 14
+
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: worldline-runtime
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadBundle
+                Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${BundleBucket}/*
+              - Sid: WriteLogs
+                Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents, logs:DescribeLogStreams]
+                Resource: !Sub ${Logs.Arn}:*
+
+  Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref Role]
+
+  OriginSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Worldline origin - HTTP from CloudFront only
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourcePrefixListId: !Ref CloudFrontPrefixList
+          Description: CloudFront origin-facing servers
+
+  Server:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref Profile
+      SecurityGroupIds: [!GetAtt OriginSecurityGroup.GroupId]
+      MetadataOptions:
+        HttpTokens: required
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 30, VolumeType: gp3, Encrypted: true }
+      Tags:
+        - { Key: Name, Value: worldline }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          dnf install -y docker
+          systemctl enable --now docker
+          cat > /usr/local/bin/worldline-update <<'SCRIPT'
+          #!/bin/bash
+          # Pull the app bundle named in /etc/worldline.env, rebuild the image and restart the container.
+          set -euxo pipefail
+          source /etc/worldline.env
+          rm -rf /opt/worldline && mkdir -p /opt/worldline
+          aws s3 cp "s3://$BUNDLE_BUCKET/$BUNDLE_KEY" /tmp/bundle.tar.gz --region "$REGION"
+          tar -xzf /tmp/bundle.tar.gz -C /opt/worldline
+          docker build -t worldline /opt/worldline
+          docker rm -f worldline || true
+          docker run -d --name worldline --restart always -p 80:8765 \
+            --log-driver awslogs --log-opt awslogs-region="$REGION" \
+            --log-opt awslogs-group=/worldline/server --log-opt awslogs-create-group=false \
+            worldline
+          docker image prune -f
+          SCRIPT
+          chmod +x /usr/local/bin/worldline-update
+          cat > /etc/worldline.env <<ENV
+          BUNDLE_BUCKET=${BundleBucket}
+          BUNDLE_KEY=${BundleKey}
+          REGION=${AWS::Region}
+          ENV
+          /usr/local/bin/worldline-update
+
+  CDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Worldline
+        PriceClass: PriceClass_100
+        HttpVersion: http2and3
+        Origins:
+          - Id: server
+            DomainName: !GetAtt Server.PublicDnsName
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+              HTTPPort: 80
+        DefaultCacheBehavior:
+          TargetOriginId: server
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6        # Managed-CachingOptimized
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: server
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad      # Managed-CachingDisabled
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # Managed-AllViewerExceptHostHeader
+
+Outputs:
+  URL:
+    Value: !Sub https://${CDN.DomainName}
+  InstanceId:
+    Value: !Ref Server

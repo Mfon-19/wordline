@@ -1,0 +1,10 @@
+.venv
+.git
+.claude
+clips
+out
+eval
+models
+scripts
+deploy
+**/__pycache__
