@@ -2,6 +2,9 @@
 
 GET  /api/health                  model and data status
 GET  /api/search?q=badger         every tube in every processed clip, best match first
+POST /api/agent {question}         ask the agent; returns a run id
+GET  /api/agent/{id}               the run's status, trace, pending approval and answer
+POST /api/agent/{id}/decision      approve or decline a pending reprocessing request
 GET  /truth/{clip}.json, PUT ...  ground-truth labels, only with --labels (local use)
 GET  /                            the viewer (web/)
 
@@ -9,6 +12,7 @@ Usage: python -m worldline.server [--port 8765] [--labels]
 """
 import argparse
 import json
+import logging
 import re
 import threading
 import time
@@ -18,7 +22,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import embed
+from . import agent, embed
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "web"
@@ -29,6 +33,7 @@ MAX_QUERY = 200
 
 app = FastAPI(title="Worldline", docs_url=None, redoc_url=None)
 state = {"ready": False, "error": None, "index": {}, "mtimes": {}}
+agents = agent.Agents()
 
 
 def load_model():
@@ -72,6 +77,40 @@ def search(q: str = Query(min_length=1, max_length=MAX_QUERY)):
     return {"query": q, "ms": round(1000 * (time.time() - t0)), "results": results}
 
 
+@app.post("/api/agent")
+async def ask(request: Request):
+    body = await request.json()
+    question = str(body.get("question", "")).strip()
+    if not 3 <= len(question) <= 500:
+        raise HTTPException(400, "ask a question of 3 to 500 characters")
+    if not state["ready"]:
+        raise HTTPException(503, "search model is still loading")
+    try:
+        run = agents.start(question)
+    except RuntimeError as e:
+        raise HTTPException(429, str(e))
+    return {"id": run.id}
+
+
+@app.get("/api/agent/{run_id}")
+def run_status(run_id: str):
+    run = agents.runs.get(run_id)
+    if not run:
+        raise HTTPException(404, "no such run")
+    return JSONResponse(run.view(), headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/agent/{run_id}/decision")
+async def decision(run_id: str, request: Request):
+    run = agents.runs.get(run_id)
+    if not run:
+        raise HTTPException(404, "no such run")
+    body = await request.json()
+    if not run.decide(bool(body.get("approve")), str(body.get("note", ""))):
+        raise HTTPException(409, "nothing is waiting for approval")
+    return {"ok": True}
+
+
 def enable_labels():
     """Read and save ground-truth labels. For local labelling only: never expose publicly."""
     @app.get("/truth/{clip}.json")
@@ -108,6 +147,7 @@ def main():
         enable_labels()
     app.mount("/", StaticFiles(directory=WEB, html=True), name="web")
     threading.Thread(target=load_model, daemon=True).start()
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
 
 

@@ -1,10 +1,9 @@
 .venv
 .git
 .claude
-clips
+clips/SOURCES.md
 out
 eval
-models
 scripts
 deploy
 **/__pycache__

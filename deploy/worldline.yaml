@@ -49,6 +49,10 @@ Resources:
                 Effect: Allow
                 Action: s3:GetObject
                 Resource: !Sub arn:aws:s3:::${BundleBucket}/*
+              - Sid: AskClaudeOnBedrock
+                Effect: Allow
+                Action: bedrock-mantle:CreateInference
+                Resource: "*"
               - Sid: WriteLogs
                 Effect: Allow
                 Action: [logs:CreateLogStream, logs:PutLogEvents, logs:DescribeLogStreams]
@@ -137,6 +141,7 @@ Resources:
           - PathPattern: /api/*
             TargetOriginId: server
             ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]   # the agent API takes POSTs
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad      # Managed-CachingDisabled
             OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # Managed-AllViewerExceptHostHeader
 

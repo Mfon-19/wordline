@@ -18,6 +18,9 @@ COPY worldline/ worldline/
 RUN python -c "from worldline import embed; embed.model()"
 
 COPY web/ web/
+# source clips and the detector, so the agent can re-run the pipeline on request
+COPY clips/ clips/
+COPY models/ models/
 RUN useradd --system --home /app worldline && chown -R worldline /app
 USER worldline
 EXPOSE 8765

@@ -56,3 +56,18 @@ aside { background: var(--panel); border-left: 1px solid var(--line); padding: 1
   main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
   aside { border-left: 0; border-top: 1px solid var(--line); max-height: 34vh; }
 }
+
+#agent { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+#ask { display: grid; gap: 6px; }
+#question { width: 100%; resize: vertical; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; }
+#ask-go { width: auto; justify-self: end; }
+#steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+#steps li { border-left: 2px solid var(--line); padding: 2px 0 2px 8px; color: var(--dim); overflow-wrap: anywhere; }
+#steps li.tool { border-color: #5ccfe6; }
+#steps li.err { border-color: #f28779; color: #f28779; }
+#steps li.answer { border-color: var(--accent); color: var(--text); font-size: 14px; }
+#steps li.approve { border-color: var(--accent); color: var(--text); }
+#steps .row { display: flex; gap: 6px; margin-top: 6px; }
+#steps .row button { width: auto; }
+#steps details summary { cursor: pointer; }
+#steps a { color: var(--accent); cursor: pointer; text-decoration: underline; }

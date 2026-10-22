@@ -12,7 +12,9 @@ Usage: python -m worldline.pipeline [--no-embed] clips/coyote_family.webm
 import json
 import math
 import sys
+import threading
 import time
+from contextlib import contextmanager
 from collections import Counter
 from pathlib import Path
 
@@ -71,8 +73,11 @@ def share(mask, box):
     return float(roi.mean()) if roi.size else 0.0
 
 
-def read_clip(path):
-    """Decode and sample the clip. Returns fps, source frame count, times, work frames, atlas frames."""
+def read_clip(path, start_s=None, end_s=None):
+    """Decode and sample the clip, or only the window [start_s, end_s] of it (sampled more densely).
+
+    Returns fps, source frame count, times (seconds from the clip's start), work frames, atlas frames.
+    """
     cap = cv2.VideoCapture(str(path))
     if not cap.isOpened():
         raise SystemExit(f"cannot open {path}")
@@ -82,9 +87,11 @@ def read_clip(path):
         while cap.grab():
             total += 1
         cap = cv2.VideoCapture(str(path))
-    step = max(fps / MAX_FPS, total / MAX_FRAMES, 1.0)
-    times, work, small, next_sample, i = [], [], [], 0.0, 0
-    while True:
+    first = int((start_s or 0) * fps)
+    last = min(total, int(end_s * fps) + 1) if end_s is not None else total
+    step = max(fps / MAX_FPS, (last - first) / MAX_FRAMES, 1.0)
+    times, work, small, next_sample, i = [], [], [], float(first), 0
+    while i < last:
         ok, frame = cap.read()
         if not ok:
             break
@@ -320,13 +327,28 @@ def smooth(a):
     return (p[:-2] + p[1:-1] + p[2:]) / 3
 
 
-def run(path, out_dir=None, embed=True):
+_settings_lock = threading.Lock()
+
+
+@contextmanager
+def settings(**overrides):
+    """Temporarily change pipeline settings (module constants), one caller at a time."""
+    with _settings_lock:
+        old = {k: globals()[k] for k in overrides}
+        globals().update(overrides)
+        try:
+            yield
+        finally:
+            globals().update(old)
+
+
+def run(path, out_dir=None, embed=True, start_s=None, end_s=None):
     path = Path(path)
     out_dir = Path(out_dir) if out_dir else ROOT / "web" / "data" / path.stem
     out_dir.mkdir(parents=True, exist_ok=True)
     t_start = time.time()
 
-    fps, total, times, work, small_frames = read_clip(path)
+    fps, total, times, work, small_frames = read_clip(path, start_s, end_s)
     grays = [cv2.cvtColor(w, cv2.COLOR_BGR2GRAY) for w in work]
     cuts = find_cuts(grays)
     fg, fg_strict = foreground(grays)
@@ -365,9 +387,10 @@ def run(path, out_dir=None, embed=True):
 
     meta = {
         "clip": path.name, "opencv": cv2.__version__, "source_fps": round(fps, 3), "source_frames": total,
-        "duration_s": round(total / fps, 2), "frames": T, "times": [round(t, 3) for t in times],
+        "duration_s": round(total / fps if start_s is None and end_s is None else times[-1] - times[0], 2), "frames": T, "times": [round(t, 3) for t in times],
         "frame_w": fw, "frame_h": fh, "ring": RING,
         "atlas": {"file": "atlas.jpg", "cols": cols, "rows": rows},
+        "window": [start_s, end_s] if start_s is not None or end_s is not None else None,
         "cuts": sorted(cuts), "tracks": tracks,
         "stats": {"detector_ms_per_frame": round(det_ms / max(T, 1), 1), "people_ignored": people_ignored,
                   "raw_tracks": len(raw), "total_s": round(time.time() - t_start, 1)},

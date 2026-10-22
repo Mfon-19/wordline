@@ -23,6 +23,14 @@
 <main>
   <div id="stage"><canvas id="view"></canvas></div>
   <aside>
+    <section id="agent">
+      <h2>Ask the agent</h2>
+      <form id="ask">
+        <textarea id="question" rows="2" placeholder="When did a badger first appear, and how long did it stay?" aria-label="Question for the agent"></textarea>
+        <button id="ask-go" type="submit">Ask</button>
+      </form>
+      <ol id="steps" aria-live="polite"></ol>
+    </section>
     <h2 id="tracks-title">Animals found</h2>
     <ol id="tracks"></ol>
     <p id="empty" hidden>Nothing found in this clip.</p>

@@ -25,9 +25,9 @@ if ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
 fi
 
 # The bundle is every file git tracks or would track (so uncommitted edits ship too),
-# plus the processed clip data, which git ignores.
+# plus the processed clip data, source clips and detector model, which git ignores.
 TMP=$(mktemp -d)
-{ git ls-files -co --exclude-standard; find web/data -type f; } | sort -u > "$TMP/files"
+{ git ls-files -co --exclude-standard; find web/data clips models -type f -not -path 'web/data/_agent/*'; } | sort -u > "$TMP/files"
 tar -czf "$TMP/code.tar.gz" -T "$TMP/files"
 aws s3 cp "$TMP/code.tar.gz" "s3://$BUCKET/$KEY" --only-show-errors
 rm -rf "$TMP"

@@ -294,6 +294,104 @@ async function runSearch(q) {
   }
 }
 
+// ---- Agent: ask a question, watch its steps, approve reprocessing ----
+let agentRun = null, agentTimer = null;
+
+function linkify(el, text) {
+  // clip#tube references become links that open the clip and select the tube
+  const re = /([a-z0-9_]+(?:\/[a-z0-9_]+)*)#(\d+)/g;
+  let last = 0, m;
+  while ((m = re.exec(text))) {
+    el.append(text.slice(last, m.index));
+    const a = document.createElement("a"), [ref, clip, tube] = m;
+    a.textContent = ref;
+    a.onclick = async () => {
+      if ([...$("clip").options].some((o) => o.value === clip)) $("clip").value = clip;
+      await load(clip);
+      const ti = data.tracks.findIndex((t) => t.id === +tube);
+      if (ti >= 0) select(ti);
+    };
+    el.append(a);
+    last = re.lastIndex;
+  }
+  el.append(text.slice(last));
+}
+
+function step(cls, text, extra) {
+  const li = document.createElement("li");
+  if (cls) li.className = cls;
+  linkify(li, text);
+  if (extra) li.append(extra);
+  $("steps").append(li);
+  return li;
+}
+
+function renderRun(run) {
+  $("steps").replaceChildren();
+  for (const e of run.events) {
+    if (e.kind === "model") {
+      if (e.thinking) {
+        const d = document.createElement("details"), s = document.createElement("summary");
+        s.textContent = "reasoning";
+        d.append(s, e.thinking);
+        step("", "", d);
+      }
+      if (e.text && e.calls.length) step("", e.text);
+      for (const c of e.calls) step("tool", `→ ${c.tool}(${Object.values(c.input).filter((v) => v !== null).join(", ")})`);
+    } else if (e.kind === "tool_result") {
+      step(e.error ? "err" : "", `${e.error ? "✗" : "✓"} ${e.tool}: ${e.text.slice(0, 160)}${e.images ? ` [${e.images} image${e.images > 1 ? "s" : ""}]` : ""}`);
+    } else if (e.kind === "approval") {
+      step("", e.approved ? "Approved." : `Declined: ${e.note}`);
+    } else if (e.kind === "final") {
+      step("answer", e.answer);
+    } else if (e.kind === "error" || e.kind === "stopped") {
+      step("err", run.answer || e.message || e.reason);
+    }
+  }
+  if (run.pending) {
+    const row = document.createElement("div"), yes = document.createElement("button"), no = document.createElement("button");
+    row.className = "row";
+    yes.textContent = "Approve";
+    no.textContent = "Decline";
+    const send = async (approve) => {
+      yes.disabled = no.disabled = true;
+      await fetch(`api/agent/${run.id}/decision`, { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ approve, note: approve ? "" : "declined in the viewer" }) });
+      pollRun();
+    };
+    yes.onclick = () => send(true);
+    no.onclick = () => send(false);
+    row.append(yes, no);
+    const w = run.pending.window_s.some((v) => v !== null) ? ` from ${run.pending.window_s[0] ?? 0} s to ${run.pending.window_s[1] ?? "end"}` : "";
+    step("approve", `The agent wants to re-run the OpenCV pipeline on ${run.pending.clip}${w} at ${run.pending.sensitivity} sensitivity (up to a minute of CPU). Reason: ${run.pending.reason}`, row);
+  } else if (run.status === "running") {
+    step("", "…");
+  }
+}
+
+async function pollRun() {
+  clearTimeout(agentTimer);
+  const r = await fetch(`api/agent/${agentRun}`);
+  if (!r.ok) return;
+  const run = await r.json();
+  renderRun(run);
+  $("ask-go").disabled = run.status === "running" || run.status === "awaiting_approval";
+  if (run.status === "running" || run.status === "awaiting_approval") agentTimer = setTimeout(pollRun, 1200);
+}
+
+$("ask").onsubmit = async (e) => {
+  e.preventDefault();
+  const question = $("question").value.trim();
+  if (!question) return;
+  $("steps").replaceChildren();
+  $("ask-go").disabled = true;
+  const r = await fetch("api/agent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question }) });
+  const body = await r.json();
+  if (!r.ok) { step("err", body.detail || "The agent is unavailable."); $("ask-go").disabled = false; return; }
+  agentRun = body.id;
+  pollRun();
+};
+
 const clipStatus = () =>
   `${data.duration_s.toFixed(1)} s clip · ${data.frames} frames · ${data.tracks.length} tubes · OpenCV ${data.opencv}`;
 
