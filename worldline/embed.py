@@ -5,6 +5,7 @@ CROPS of the tube's confirmed frames, using the tube's outline. A typed query is
 the model's search prompt and compared by cosine similarity.
 """
 import json
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -21,9 +22,15 @@ MIN_HALF = 48    # smallest crop half-size, in source pixels
 def model():
     import torch
     from sentence_transformers import SentenceTransformer
+    # WORLDLINE_EMBED_DTYPE: float32 (default), bfloat16, or auto (bfloat16 when the CPU has native
+    # bf16, such as Graviton4). float16 must not be used: the model's activations overflow it.
+    choice = os.environ.get("WORLDLINE_EMBED_DTYPE", "float32")
+    if choice == "auto":
+        flags = Path("/proc/cpuinfo").read_text() if Path("/proc/cpuinfo").exists() else ""
+        choice = "bfloat16" if " bf16" in flags else "float32"
+    dtype = getattr(torch, choice)
     # images and text only: skipping the audio encoder saves 300M parameters
-    return SentenceTransformer(MODEL_ID, config_kwargs={"audio_config": None},
-                               model_kwargs={"torch_dtype": torch.float32})
+    return SentenceTransformer(MODEL_ID, config_kwargs={"audio_config": None}, model_kwargs={"torch_dtype": dtype})
 
 
 def unit(v):
@@ -84,12 +91,12 @@ def embed_tubes(clip_path, meta):
     for t in meta["tracks"]:
         images = tube_images(clip_path, meta, t, frames=frames)
         if images:
-            vecs[t["id"]] = unit(unit(model().encode(images)).mean(0))
+            vecs[t["id"]] = unit(unit(model().encode(images).astype("float32")).mean(0))
     return vecs
 
 
 def embed_query(text):
-    return unit(model().encode([text], prompt_name="SearchQuery"))[0]
+    return unit(model().encode([text], prompt_name="SearchQuery").astype("float32"))[0]
 
 
 # Other things a tube could be. A result is "confident" only if the typed query fits the tube
@@ -101,7 +108,7 @@ ALTERNATIVES = ["bird", "duck", "waterbird", "deer", "fox", "coyote", "dog", "ca
 
 @lru_cache(maxsize=1)
 def alternatives():
-    return unit(model().encode(ALTERNATIVES, prompt_name="SearchQuery"))
+    return unit(model().encode(ALTERNATIVES, prompt_name="SearchQuery").astype("float32"))
 
 
 def margin(tube_vec, query_vec, query):

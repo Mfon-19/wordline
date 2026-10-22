@@ -529,7 +529,7 @@ async function watchUpload(id) {
   const job = await r.json();
   if (!r.ok) { setUploadStatus(job.detail || "That upload is no longer available."); return; }
   if (job.status === "queued") setUploadStatus(`Waiting in line${job.ahead ? ` (${job.ahead} ahead)` : ""}…`);
-  else if (job.status === "processing") setUploadStatus("OpenCV is finding and tracing animals. This takes about a minute…");
+  else if (job.status === "processing") setUploadStatus("OpenCV is finding and tracing animals. This takes one to a few minutes…");
   else if (job.status === "error") { setUploadStatus(job.error); $("upload-go").disabled = false; return; }
   if (job.status !== "done") { setTimeout(() => watchUpload(id), 2000); return; }
   setUploadStatus(`Done in ${job.seconds} s: ${job.tubes} animal visit${job.tubes === 1 ? "" : "s"} found.` +

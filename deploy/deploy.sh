@@ -4,10 +4,12 @@
 # running instance through SSM (no SSH).
 #
 # Usage: deploy/deploy.sh            (needs the AWS CLI signed in; region from AWS_REGION or config)
+#        INSTANCE_TYPE=c8g.xlarge deploy/deploy.sh   to change the server size (restarts it)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 STACK=worldline
+INSTANCE_TYPE=${INSTANCE_TYPE:-m8g.large}   # Graviton4; updating the stack keeps old values unless passed
 REGION=${AWS_REGION:-$(aws configure get region)}
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 BUCKET=worldline-$ACCOUNT-$REGION
@@ -43,8 +45,12 @@ if aws cloudformation describe-stacks --stack-name "$STACK" >/dev/null 2>&1; the
     --query "Stacks[0].Parameters[?ParameterKey=='BundleKey'].ParameterValue" --output text)
   aws cloudformation deploy --stack-name "$STACK" --template-file deploy/worldline.yaml \
     --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
-    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$CURRENT_KEY" CloudFrontPrefixList="$PREFIX_LIST"
+    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$CURRENT_KEY" CloudFrontPrefixList="$PREFIX_LIST" InstanceType="$INSTANCE_TYPE"
   INSTANCE=$(aws cloudformation describe-stacks --stack-name "$STACK" --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
+  # a change of instance type restarts the instance; wait until SSM can reach it again
+  aws ec2 wait instance-status-ok --instance-ids "$INSTANCE"
+  until [ "$(aws ssm describe-instance-information --filters Key=InstanceIds,Values="$INSTANCE" \
+      --query 'InstanceInformationList[0].PingStatus' --output text)" = Online ]; do sleep 10; done
   echo "updating running instance $INSTANCE"
   # SSM parameters as JSON, so the shell commands need no extra quoting
   PARAMS=$(mktemp)
@@ -70,6 +76,6 @@ JSON
 else
   aws cloudformation deploy --stack-name "$STACK" --template-file deploy/worldline.yaml \
     --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
-    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$KEY" CloudFrontPrefixList="$PREFIX_LIST"
+    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$KEY" CloudFrontPrefixList="$PREFIX_LIST" InstanceType="$INSTANCE_TYPE"
 fi
 aws cloudformation describe-stacks --stack-name "$STACK" --query "Stacks[0].Outputs" --output table

@@ -13,7 +13,7 @@ Parameters:
     Description: S3 key of the app bundle (tar.gz)
   InstanceType:
     Type: String
-    Default: t4g.large
+    Default: m8g.large
     AllowedValues: [t4g.large, t4g.xlarge, m7g.large, m8g.large]
   ImageId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>

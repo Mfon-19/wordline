@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 
 
 # Bake the search model into the image so the server starts without a network download
 ENV HF_HOME=/app/.hf
+# bfloat16 for the search model where the CPU supports it natively (Graviton4), else float32
+ENV WORLDLINE_EMBED_DTYPE=auto
 COPY worldline/ worldline/
 RUN python -c "from worldline import embed; embed.model()"
 
