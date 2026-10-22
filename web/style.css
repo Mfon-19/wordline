@@ -19,6 +19,15 @@ select, button {
 }
 button { cursor: pointer; width: 40px; }
 .knob { display: flex; align-items: center; gap: 8px; color: var(--dim); }
+#search { flex: 1; max-width: 420px; }
+#q { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font: inherit; }
+#q:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.match { display: block; height: 4px; margin-top: 6px; border-radius: 2px; background: var(--line); }
+.match > span { display: block; height: 100%; border-radius: 2px; background: var(--c); }
+#elsewhere { margin-top: 18px; }
+#others { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+#others button { width: 100%; text-align: left; padding: 8px 10px; }
+#others small { color: var(--dim); }
 #status { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
 main { display: grid; grid-template-columns: 1fr 280px; min-height: 0; }
 #stage { position: relative; min-width: 0; min-height: 0; }

@@ -14,15 +14,22 @@
 <header>
   <h1>Worldline</h1>
   <select id="clip" aria-label="Clip"></select>
+  <form id="search" role="search">
+    <input id="q" type="search" placeholder="Search: badger, bird on water…" aria-label="Search the footage" autocomplete="off">
+  </form>
   <label class="knob">Haze <input id="haze" type="range" min="0" max="1" step="0.01" value="0.35"></label>
   <span id="status"></span>
 </header>
 <main>
   <div id="stage"><canvas id="view"></canvas></div>
   <aside>
-    <h2>Animals found</h2>
+    <h2 id="tracks-title">Animals found</h2>
     <ol id="tracks"></ol>
     <p id="empty" hidden>Nothing found in this clip.</p>
+    <section id="elsewhere" hidden>
+      <h2>Best matches in other clips</h2>
+      <ol id="others"></ol>
+    </section>
   </aside>
 </main>
 <footer>

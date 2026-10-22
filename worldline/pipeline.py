@@ -4,7 +4,10 @@ Every step is OpenCV 5: decode (VideoCapture), detect (cv2.dnn), find motion aga
 median background (connected components), fill gaps between detections (Lucas-Kanade
 optical flow), outline (GrabCut + findContours), measure.
 
-Usage: python -m worldline.pipeline clips/coyote_family.webm
+Each tube is then embedded with EmbeddingGemma 2 so it can be searched by typed words
+(worldline/embed.py); pass --no-embed to skip that step.
+
+Usage: python -m worldline.pipeline [--no-embed] clips/coyote_family.webm
 """
 import json
 import math
@@ -317,7 +320,7 @@ def smooth(a):
     return (p[:-2] + p[1:-1] + p[2:]) / 3
 
 
-def run(path, out_dir=None):
+def run(path, out_dir=None, embed=True):
     path = Path(path)
     out_dir = Path(out_dir) if out_dir else ROOT / "web" / "data" / path.stem
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -370,14 +373,20 @@ def run(path, out_dir=None):
                   "raw_tracks": len(raw), "total_s": round(time.time() - t_start, 1)},
     }
     (out_dir / "worldline.json").write_text(json.dumps(meta, separators=(",", ":")))
+    if embed:  # imported here: the search model needs PyTorch, the rest of the pipeline does not
+        from . import embed as emb
+        t0 = time.time()
+        emb.save(out_dir / "embeddings.json", emb.embed_tubes(path, meta))
+        meta["stats"]["embed_s"] = round(time.time() - t0, 1)
     done = sorted(p.parent.name for p in out_dir.parent.glob("*/worldline.json"))
     (out_dir.parent / "index.json").write_text(json.dumps(done))
     return meta
 
 
 if __name__ == "__main__":
-    for p in sys.argv[1:]:
-        m = run(p)
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    for p in args:
+        m = run(p, embed="--no-embed" not in sys.argv)
         print(f"{m['clip']}: {m['frames']} frames, {len(m['tracks'])} tubes from {m['stats']['raw_tracks']} candidates, "
               f"{m['stats']['total_s']} s (detector {m['stats']['detector_ms_per_frame']} ms/frame)")
         for t in m["tracks"]:

@@ -11,31 +11,14 @@ import sys
 import time
 from pathlib import Path
 
-import cv2
 import numpy as np
-import torch
-from PIL import Image
-from sentence_transformers import SentenceTransformer
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+from worldline import embed  # noqa: E402
 from worldline.evaluate import covers, truth_positions  # noqa: E402
 
-CROPS = 4
 DISTRACTORS = ["domestic cat", "dog", "rabbit", "raccoon", "bear", "horse", "hedgehog", "squirrel"]
-
-
-def frames_at(path, indices):
-    want, out, i = set(indices), {}, 0
-    cap = cv2.VideoCapture(str(path))
-    while want - out.keys():
-        ok, f = cap.read()
-        if not ok:
-            break
-        if i in want:
-            out[i] = f
-        i += 1
-    return out
 
 
 def labelled_tubes():
@@ -55,31 +38,12 @@ def labelled_tubes():
 
 
 def crops_for(clip, data, tb):
-    """Crops around the animal, and the whole frame, at CROPS of the tube's confirmed frames."""
-    good = [tb["start"] + k for k, c in enumerate(tb["src"]) if c in "dm"] or list(range(tb["start"], tb["end"] + 1))
-    picks = [good[int(i)] for i in np.linspace(0, len(good) - 1, CROPS)]
-    fps = data["source_fps"]
-    src = frames_at(next((ROOT / "clips").glob(clip + ".*")), [round(data["times"][f] * fps) for f in picks])
-    crops, whole = [], []
-    for f in picks:
-        img = src.get(round(data["times"][f] * fps))
-        if img is None:
-            continue
-        H, W = img.shape[:2]
-        k = f - tb["start"]
-        cx, cy, half = tb["cx"][k] * W, tb["cy"][k] * H, max(48, 1.3 * max(tb["r"][k]) * W)
-        x0, y0, x1, y1 = (int(max(0, cx - half)), int(max(0, cy - half)), int(min(W, cx + half)), int(min(H, cy + half)))
-        crops.append(Image.fromarray(cv2.cvtColor(img[y0:y1, x0:x1], cv2.COLOR_BGR2RGB)))
-        whole.append(Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)))
-    return crops, whole
-
-
-def unit(v):
-    return v / np.linalg.norm(v, axis=-1, keepdims=True)
+    path = next((ROOT / "clips").glob(clip + ".*"))
+    return embed.tube_images(path, data, tb), embed.tube_images(path, data, tb, crop=False)
 
 
 def score(name, tube_vecs, truth, vocab, text):
-    sims = unit(tube_vecs) @ text.T                       # tubes x vocabulary
+    sims = embed.unit(tube_vecs) @ text.T                       # tubes x vocabulary
     order = np.argsort(-sims, 1)
     top1 = np.mean([vocab[o[0]] == s for o, s in zip(order, truth)])
     top3 = np.mean([s in [vocab[j] for j in o[:3]] for o, s in zip(order, truth)])
@@ -94,18 +58,17 @@ def score(name, tube_vecs, truth, vocab, text):
 
 def main():
     t0 = time.time()
-    model = SentenceTransformer("google/embeddinggemma-2", config_kwargs={"audio_config": None},
-                                model_kwargs={"torch_dtype": torch.float32})
+    model = embed.model()
     rows = labelled_tubes()
     truth = [s for *_, s in rows]
     vocab = sorted(set(truth)) + DISTRACTORS
-    text = unit(model.encode(vocab, prompt_name="SearchQuery"))
+    text = embed.unit(model.encode(vocab, prompt_name="SearchQuery"))
     crop_vecs, whole_vecs, t_img, n_img = [], [], 0.0, 0
     for clip, data, tb, s in rows:
         crops, whole = crops_for(clip, data, tb)
         t = time.time()
-        crop_vecs.append(unit(model.encode(crops)).mean(0))
-        whole_vecs.append(unit(model.encode(whole)).mean(0))
+        crop_vecs.append(embed.unit(model.encode(crops)).mean(0))
+        whole_vecs.append(embed.unit(model.encode(whole)).mean(0))
         t_img += time.time() - t
         n_img += len(crops) + len(whole)
     print(f"{len(rows)} labelled tubes from {len({r[0] for r in rows})} clips, {len(set(truth))} species, "

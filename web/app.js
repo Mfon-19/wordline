@@ -84,6 +84,7 @@ tubes.renderOrder = 1;
 rings.renderOrder = 2;
 
 let data = null, height = 1, selected = null, playing = false, lastTick = 0;
+let search = null; // { query, results: [{clip, tube, score, ...}], lo, hi }
 
 async function loadVolume(meta, base) {
   const img = new Image();
@@ -182,17 +183,29 @@ function setFrame(f) {
   updateRings(Math.round(f));
 }
 
-function select(ti) {
-  selected = selected === ti ? null : ti;
+// How well a tube matches the current search, from 0 (worst result) to 1 (best), or null.
+function match(tr) {
+  const r = search?.results.find((x) => x.clip === $("clip").value && x.tube === tr.id);
+  return r ? (r.score - search.lo) / (search.hi - search.lo || 1) : null;
+}
+
+function restyle() {
   tubes.children.forEach((g, i) => {
-    const on = selected === null || selected === i;
-    g.userData.skin.material.opacity = on ? (selected === null ? 0.22 : 0.4) : 0.03;
-    g.userData.ribs.material.opacity = on ? (selected === null ? 0.35 : 0.7) : 0.05;
+    const m = match(data.tracks[i]);
+    let w = selected === null ? (m === null ? 0.5 : 0.08 + 0.92 * m * m) : (selected === i ? 1 : 0.08);
+    g.userData.skin.material.opacity = 0.03 + 0.4 * w;
+    g.userData.ribs.material.opacity = 0.05 + 0.65 * w;
   });
-  [...$("tracks").children].forEach((li, i) => {
+  [...$("tracks").children].forEach((li) => {
+    const i = +li.dataset.ti;
     li.classList.toggle("on", selected === i);
     li.classList.toggle("off", selected !== null && selected !== i);
   });
+}
+
+function select(ti) {
+  selected = selected === ti ? null : ti;
+  restyle();
   if (selected !== null) setFrame(data.tracks[ti].start);
   else updateRings(+$("scrub").value);
 }
@@ -202,20 +215,31 @@ function buildPanels() {
   list.replaceChildren();
   bars.replaceChildren();
   $("empty").hidden = data.tracks.length > 0;
-  const rows = Math.max(data.tracks.length, 1);
-  data.tracks.forEach((tr, ti) => {
-    const color = COLORS[ti % COLORS.length];
+  $("tracks-title").textContent = search ? `Matches for “${search.query}”` : "Animals found";
+  const order = data.tracks.map((tr, ti) => ti);
+  if (search) order.sort((a, b) => match(data.tracks[b]) - match(data.tracks[a]));
+  for (const ti of order) {
+    const tr = data.tracks[ti], color = COLORS[ti % COLORS.length];
     const li = document.createElement("li");
+    li.dataset.ti = ti;
     li.style.setProperty("--c", color);
-    const guess = Object.keys(tr.guesses)[0];
     const title = document.createElement("b");
     title.textContent = `Animal ${tr.id}`;
     const when = document.createElement("small");
     when.textContent = `In at ${tr.enter_s.toFixed(1)} s, stayed ${tr.dwell_s.toFixed(1)} s`;
     const more = document.createElement("small");
-    more.textContent = `Moved ${(tr.path_len * 100).toFixed(0)}% of frame width · ` +
-      (tr.found_by === "motion" ? "found by motion only" : `model guess: ${guess}`);
+    more.textContent = `Moved ${(tr.path_len * 100).toFixed(0)}% of frame width` +
+      (tr.found_by === "motion" ? " · found by motion only" : "");
     li.append(title, when, more);
+    const m = match(tr);
+    if (m !== null) {
+      const bar = document.createElement("span"), fill = document.createElement("span");
+      bar.className = "match";
+      bar.title = `Match ${Math.round(m * 100)}%`;
+      fill.style.width = `${Math.max(3, m * 100)}%`;
+      bar.append(fill);
+      li.append(bar);
+    }
     li.onclick = () => select(ti);
     list.append(li);
     const bar = document.createElement("i");
@@ -224,8 +248,54 @@ function buildPanels() {
     bar.style.width = `${((tr.end - tr.start) / (data.frames - 1)) * 100}%`;
     bar.style.top = `${4 + (ti % 6) * 6}px`;
     bars.append(bar);
-  });
+  }
+  buildOthers();
+  restyle();
 }
+
+// The strongest matches in clips other than the one on screen.
+function buildOthers() {
+  const others = $("others");
+  others.replaceChildren();
+  const rows = (search?.results || []).filter((r) => r.clip !== $("clip").value).slice(0, 5);
+  $("elsewhere").hidden = rows.length === 0;
+  for (const r of rows) {
+    const li = document.createElement("li"), b = document.createElement("button");
+    const m = (r.score - search.lo) / (search.hi - search.lo || 1);
+    b.innerHTML = `<b></b><small></small><span class="match" style="--c:var(--accent)"><span></span></span>`;
+    b.querySelector("b").textContent = `${r.clip.replaceAll("_", " ")} · Animal ${r.tube}`;
+    b.querySelector("small").textContent = ` at ${r.enter_s.toFixed(1)} s`;
+    b.querySelector(".match > span").style.width = `${Math.max(3, m * 100)}%`;
+    b.onclick = async () => {
+      $("clip").value = r.clip;
+      await load(r.clip);
+      select(data.tracks.findIndex((t) => t.id === r.tube));
+    };
+    li.append(b);
+    others.append(li);
+  }
+}
+
+async function runSearch(q) {
+  q = q.trim();
+  if (!q) { search = null; buildPanels(); $("status").textContent = clipStatus(); return; }
+  $("status").textContent = "Searching…";
+  try {
+    const r = await fetch(`api/search?q=${encodeURIComponent(q)}`);
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.detail || r.statusText);
+    const scores = body.results.map((x) => x.score);
+    search = { query: q, results: body.results, lo: Math.min(...scores), hi: Math.max(...scores) };
+    selected = null;
+    buildPanels();
+    $("status").textContent = `${body.results.length} tubes ranked in ${body.ms} ms`;
+  } catch (e) {
+    $("status").textContent = `Search unavailable: ${e.message}`;
+  }
+}
+
+const clipStatus = () =>
+  `${data.duration_s.toFixed(1)} s clip · ${data.frames} frames · ${data.tracks.length} tubes · OpenCV ${data.opencv}`;
 
 async function load(name) {
   $("status").textContent = "Loading…";
@@ -245,7 +315,7 @@ async function load(name) {
   buildPanels();
   setFrame(0);
   console.info(`loaded ${name} in ${Math.round(performance.now() - t0)} ms`);
-  $("status").textContent = `${data.duration_s.toFixed(1)} s clip · ${data.frames} frames · ${data.tracks.length} tubes · OpenCV ${data.opencv}`;
+  $("status").textContent = clipStatus();
 }
 
 function resize() {
@@ -271,10 +341,12 @@ for (const c of CLIPS) $("clip").add(new Option(c.replaceAll("_", " "), c));
 $("clip").onchange = (e) => load(e.target.value);
 $("scrub").oninput = (e) => setFrame(+e.target.value);
 $("haze").oninput = (e) => { volumeMaterial.uniforms.haze.value = +e.target.value; };
+$("search").onsubmit = (e) => { e.preventDefault(); runSearch($("q").value); };
+$("q").onsearch = (e) => { if (!e.target.value) runSearch(""); };
 $("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "⏸" : "▶"; };
 new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
 requestAnimationFrame(tick);
 load(CLIPS.includes("coyote_family") ? "coyote_family" : CLIPS[0]);
 $("clip").value = data ? $("clip").value : "coyote_family";
-window.worldline = { get data() { return data; }, setFrame, select };
+window.worldline = { get data() { return data; }, setFrame, select, runSearch };
