@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 :root {
   --bg: #0b0d10; --panel: #13161b; --line: #262b33; --text: #e6e8eb; --dim: #8b929c; --accent: #ffb454;
 }
@@ -9,6 +10,7 @@ body {
   font: 14px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 header, footer { display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--panel); }
+header { flex-wrap: wrap; row-gap: 8px; }
 header { border-bottom: 1px solid var(--line); }
 footer { border-top: 1px solid var(--line); }
 h1 { font-size: 16px; margin: 0; letter-spacing: 0.04em; }
@@ -19,7 +21,7 @@ select, button {
 }
 button { cursor: pointer; width: 40px; }
 .knob { display: flex; align-items: center; gap: 8px; color: var(--dim); }
-#search { flex: 1; max-width: 420px; }
+#search { flex: 1 1 200px; max-width: 420px; }
 #q { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font: inherit; }
 #q:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .match { display: block; height: 4px; margin-top: 6px; border-radius: 2px; background: var(--line); }
@@ -71,3 +73,33 @@ aside { background: var(--panel); border-left: 1px solid var(--line); padding: 1
 #steps .row button { width: auto; }
 #steps details summary { cursor: pointer; }
 #steps a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+#help { width: 32px; height: 32px; padding: 0; border-radius: 50%; }
+#tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: 13px; white-space: nowrap; }
+#loading { position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 8px; color: var(--dim); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
+.spinner { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+#nothing { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); margin: 0; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; }
+#intro { position: absolute; left: 16px; bottom: 16px; max-width: 420px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; box-shadow: 0 8px 30px rgb(0 0 0 / 0.4); }
+#intro h2 { color: var(--text); font-size: 14px; text-transform: none; letter-spacing: 0; }
+#intro ul { margin: 0 0 8px; padding-left: 18px; display: grid; gap: 6px; }
+#intro p { color: var(--dim); margin: 0 0 10px; }
+#intro button { width: auto; }
+#search-note { color: var(--dim); margin: -4px 0 10px; font-size: 13px; }
+@media (max-width: 760px) {
+  .knob { display: none; }
+  #status { flex-basis: 100%; order: 10; margin-left: 0; font-size: 12px; }
+  #search { flex-basis: 100%; max-width: none; order: 5; }
+  #intro { right: 16px; max-width: none; }
+}
+
+button.wide { width: auto; }
+#upload { position: absolute; right: 16px; top: 16px; width: min(380px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; box-shadow: 0 8px 30px rgb(0 0 0 / 0.4); display: grid; gap: 10px; }
+#upload h2 { color: var(--text); font-size: 14px; text-transform: none; letter-spacing: 0; margin: 0; }
+#upload p { margin: 0; }
+#upload .small { color: var(--dim); font-size: 12px; }
+#upload .check { display: flex; gap: 8px; align-items: flex-start; }
+#upload .row { display: flex; gap: 8px; }
+#upload-status { color: var(--accent); min-height: 1.2em; }
+progress { width: 100%; }

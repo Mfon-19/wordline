@@ -2,6 +2,8 @@
 
 GET  /api/health                  model and data status
 GET  /api/search?q=badger         every tube in every processed clip, best match first
+POST /api/upload                   upload a clip (raw body, X-Filename header); returns a job id
+GET  /api/upload/{id}              processing status of an upload
 POST /api/agent {question}         ask the agent; returns a run id
 GET  /api/agent/{id}               the run's status, trace, pending approval and answer
 POST /api/agent/{id}/decision      approve or decline a pending reprocessing request
@@ -22,7 +24,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import agent, embed
+from . import agent, embed, uploads
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "web"
@@ -34,12 +36,15 @@ MAX_QUERY = 200
 app = FastAPI(title="Worldline", docs_url=None, redoc_url=None)
 state = {"ready": False, "error": None, "index": {}, "mtimes": {}}
 agents = agent.Agents()
+jobs = uploads.Uploads()
+JOB = re.compile(r"^[a-z0-9]{8,32}$")
 
 
 def load_model():
     try:
         embed.model()
         embed.embed_query("warm up")
+        embed.alternatives()
         state["ready"] = True
     except Exception as e:  # reported by /api/health instead of crashing the viewer
         state["error"] = f"{type(e).__name__}: {e}"
@@ -64,17 +69,76 @@ def health():
             "clips": len(index()), "tubes": sum(len(v) for v in index().values())}
 
 
+def upload_rows(job_id):
+    """Tube vectors for one private upload, if it exists and is processed."""
+    d = DATA / "_uploads" / job_id
+    if not JOB.match(job_id) or not (d / "embeddings.json").exists():
+        return {}
+    meta = json.loads((d / "worldline.json").read_text())
+    tubes = {t["id"]: t for t in meta["tracks"]}
+    return {f"_uploads/{job_id}": [(tid, vec, tubes[tid]) for tid, vec in embed.load(d / "embeddings.json").items() if tid in tubes]}
+
+
 @app.get("/api/search")
-def search(q: str = Query(min_length=1, max_length=MAX_QUERY)):
+def search(q: str = Query(min_length=1, max_length=MAX_QUERY), include: str = ""):
     if not state["ready"]:
         raise HTTPException(503, state["error"] or "search model is still loading")
     t0 = time.time()
-    qv = embed.embed_query(q.strip())
-    results = [{"clip": clip, "tube": tid, "score": round(float(vec @ qv), 4),
-                "enter_s": t["enter_s"], "exit_s": t["exit_s"]}
-               for clip, rows in index().items() for tid, vec, t in rows]
+    q = q.strip()
+    qv = embed.embed_query(q)
+    results = []
+    for clip, rows in {**index(), **(upload_rows(include) if include else {})}.items():
+        for tid, vec, t in rows:
+            m = embed.margin(vec, qv, q)
+            results.append({"clip": clip, "tube": tid, "score": round(float(vec @ qv), 4), "margin": round(m, 4),
+                            "confident": m > 0, "enter_s": t["enter_s"], "exit_s": t["exit_s"]})
     results.sort(key=lambda r: -r["score"])
     return {"query": q, "ms": round(1000 * (time.time() - t0)), "results": results}
+
+
+def visitor(request: Request):
+    """The visitor's address. CloudFront appends the real one as the last X-Forwarded-For entry;
+    earlier entries come from the visitor and can be forged."""
+    fwd = request.headers.get("x-forwarded-for", "")
+    return fwd.split(",")[-1].strip() or (request.client.host if request.client else "unknown")
+
+
+@app.post("/api/upload")
+async def upload(request: Request):
+    if request.query_params.get("agree") != "1":
+        raise HTTPException(400, "please confirm you have the right to share this footage")
+    size = int(request.headers.get("content-length") or 0)
+    if size > uploads.MAX_BYTES:
+        raise HTTPException(413, f"Clips can be up to {uploads.MAX_BYTES // 2**20} MB.")
+    try:
+        jobs.admit(visitor(request))
+    except uploads.Refused as e:
+        raise HTTPException(429, str(e))
+    dst, written = jobs.new_path(request.headers.get("x-filename")), 0
+    with open(dst, "wb") as f:
+        async for chunk in request.stream():
+            written += len(chunk)
+            if written > uploads.MAX_BYTES:
+                f.close()
+                dst.unlink(missing_ok=True)
+                raise HTTPException(413, f"Clips can be up to {uploads.MAX_BYTES // 2**20} MB.")
+            f.write(chunk)
+    if written == 0:
+        dst.unlink(missing_ok=True)
+        raise HTTPException(400, "the upload was empty")
+    try:
+        job_id = jobs.add(visitor(request), dst)
+    except uploads.Refused as e:
+        raise HTTPException(400, str(e))
+    return {"id": job_id}
+
+
+@app.get("/api/upload/{job_id}")
+def upload_status(job_id: str):
+    job = jobs.view(job_id) if JOB.match(job_id) else None
+    if not job:
+        raise HTTPException(404, "no such upload (uploads are deleted after 24 hours)")
+    return JSONResponse(job, headers={"Cache-Control": "no-store"})
 
 
 @app.post("/api/agent")
@@ -109,6 +173,19 @@ async def decision(run_id: str, request: Request):
     if not run.decide(bool(body.get("approve")), str(body.get("note", ""))):
         raise HTTPException(409, "nothing is waiting for approval")
     return {"ok": True}
+
+
+@app.middleware("http")
+async def cache_headers(request: Request, call_next):
+    """Code and clip lists must be fresh after a deploy; frame images can be cached for a while."""
+    response = await call_next(request)
+    path = request.url.path
+    if "cache-control" not in response.headers:
+        if path.endswith((".jpg", ".png")):
+            response.headers["Cache-Control"] = "public, max-age=3600"
+        elif not path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 def enable_labels():

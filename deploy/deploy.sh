@@ -27,7 +27,7 @@ fi
 # The bundle is every file git tracks or would track (so uncommitted edits ship too),
 # plus the processed clip data, source clips and detector model, which git ignores.
 TMP=$(mktemp -d)
-{ git ls-files -co --exclude-standard; find web/data clips models -type f -not -path 'web/data/_agent/*'; } | sort -u > "$TMP/files"
+{ git ls-files -co --exclude-standard; find web/data clips models -type f -not -path 'web/data/_agent/*' -not -path 'web/data/_uploads/*'; } | sort -u > "$TMP/files"
 tar -czf "$TMP/code.tar.gz" -T "$TMP/files"
 aws s3 cp "$TMP/code.tar.gz" "s3://$BUCKET/$KEY" --only-show-errors
 rm -rf "$TMP"
@@ -37,6 +37,13 @@ PREFIX_LIST=$(aws ec2 describe-managed-prefix-lists --filters Name=prefix-list-n
   --query 'PrefixLists[0].PrefixListId' --output text)
 
 if aws cloudformation describe-stacks --stack-name "$STACK" >/dev/null 2>&1; then
+  # Apply template changes (IAM, CloudFront) but keep the original BundleKey: changing it would
+  # change the instance's user data and restart it with a new address, breaking the CDN origin.
+  CURRENT_KEY=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+    --query "Stacks[0].Parameters[?ParameterKey=='BundleKey'].ParameterValue" --output text)
+  aws cloudformation deploy --stack-name "$STACK" --template-file deploy/worldline.yaml \
+    --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
+    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$CURRENT_KEY" CloudFrontPrefixList="$PREFIX_LIST"
   INSTANCE=$(aws cloudformation describe-stacks --stack-name "$STACK" --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
   echo "updating running instance $INSTANCE"
   CMD=$(aws ssm send-command --instance-ids "$INSTANCE" --document-name AWS-RunShellScript \

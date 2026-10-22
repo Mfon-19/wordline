@@ -7,3 +7,6 @@ models/*.onnx
 clips/*.webm
 .claude/
 clips/*.ogv
+uploads/
+web/data/_uploads/
+web/data/_agent/

@@ -44,7 +44,8 @@ embedding of crops of the animal, so it can be searched by typed words.
 How to work:
 - Start by searching or listing clips; then inspect the most promising tubes. Inspecting returns \
 measurements and crops of the animal: look at the crops before trusting a match. Search scores are \
-relative, not probabilities; the top result can still be wrong.
+relative, not probabilities; "confident" means the query fits that tube better than 26 other animal \
+names. Even confident results can be wrong, and unconfident ones usually are.
 - If the tubes don't answer the question (nothing convincing found, or a tube looks broken or \
 cut short), look at frames with view_frame. If you can see an animal the pipeline missed, or a \
 visit seems split, call reprocess_clip with higher sensitivity and, ideally, a time window. A \
@@ -195,8 +196,9 @@ def search_footage(query, clip, limit):
             t = tubes.get(tid)
             if t:
                 rows.append({"clip": d.name if d.parent == DATA else str(d.relative_to(DATA)), "tube": tid,
-                             "score": round(float(vec @ qv), 3), "enter_s": t["enter_s"], "exit_s": t["exit_s"],
-                             "found_by": t["found_by"]})
+                             "score": round(float(vec @ qv), 3),
+                             "confident": embed.margin(vec, qv, query) > 0,
+                             "enter_s": t["enter_s"], "exit_s": t["exit_s"], "found_by": t["found_by"]})
     rows.sort(key=lambda r: -r["score"])
     return rows[:limit]
 
@@ -240,7 +242,7 @@ def view_frame(clip, time_s):
 def reprocess_clip(run_id, n, clip, sensitivity, start_s, end_s):
     from . import pipeline
     base = clip.split("/")[-1].split("__")[0]
-    src = next(CLIPS.glob(base + ".*"), None)
+    src = next(CLIPS.glob(base + ".*"), None) or next((ROOT / "uploads").glob(base + ".*"), None)
     if src is None:
         raise ToolError(f"the source video for {base!r} is not on this server")
     name = f"_agent/{run_id}/{base}__{n}"
@@ -249,7 +251,8 @@ def reprocess_clip(run_id, n, clip, sensitivity, start_s, end_s):
         overrides["MAX_FPS"] = 15
     t0 = time.time()
     with pipeline.settings(**overrides):
-        meta = pipeline.run(src, out_dir=DATA / name, start_s=start_s, end_s=end_s)
+        meta = pipeline.run(src, out_dir=DATA / name, start_s=start_s, end_s=end_s,
+                            hide_people=src.parent.name == "uploads")
     return {"new_clip": name, "seconds": round(time.time() - t0, 1), "settings": overrides or "default",
             "window_s": [start_s, end_s],
             "tubes": [{"tube": t["id"], "enter_s": t["enter_s"], "exit_s": t["exit_s"], "dwell_s": t["dwell_s"],

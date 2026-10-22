@@ -92,6 +92,25 @@ def embed_query(text):
     return unit(model().encode([text], prompt_name="SearchQuery"))[0]
 
 
+# Other things a tube could be. A result is "confident" only if the typed query fits the tube
+# better than every one of these (names contained in the query, or containing it, are skipped).
+ALTERNATIVES = ["bird", "duck", "waterbird", "deer", "fox", "coyote", "dog", "cat", "wild cat", "badger",
+                "wild boar", "bear", "raccoon", "rabbit", "squirrel", "rodent", "horse", "cow", "sheep", "moose",
+                "mountain lion", "weasel", "hedgehog", "otter", "empty ground", "plants moving"]
+
+
+@lru_cache(maxsize=1)
+def alternatives():
+    return unit(model().encode(ALTERNATIVES, prompt_name="SearchQuery"))
+
+
+def margin(tube_vec, query_vec, query):
+    """How much better the query fits the tube than the best alternative name (positive = confident)."""
+    q = query.lower()
+    keep = [i for i, w in enumerate(ALTERNATIVES) if w not in q and q not in w]
+    return float(tube_vec @ query_vec - (alternatives()[keep] @ tube_vec).max())
+
+
 def save(path, vecs):
     Path(path).write_text(json.dumps({
         "model": MODEL_ID, "dim": 768, "crops": CROPS,

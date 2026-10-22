@@ -6,8 +6,8 @@
 <title>Worldline</title>
 <link rel="stylesheet" href="style.css">
 <script type="importmap">
-{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-             "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+{"imports": {"three": "./vendor/three/three.module.js",
+             "three/addons/": "./vendor/three/addons/"}}
 </script>
 </head>
 <body>
@@ -18,10 +18,41 @@
     <input id="q" type="search" placeholder="Search: badger, bird on water…" aria-label="Search the footage" autocomplete="off">
   </form>
   <label class="knob">Haze <input id="haze" type="range" min="0" max="1" step="0.01" value="0.35"></label>
-  <span id="status"></span>
+  <span id="status" role="status"></span>
+  <button id="upload-open" class="wide">Upload a clip</button>
+  <button id="help" aria-label="How to read this view">?</button>
 </header>
 <main>
-  <div id="stage"><canvas id="view"></canvas></div>
+  <div id="stage">
+    <canvas id="view" aria-label="3D view of the clip: time runs left to right, each coloured tube is one animal visit"></canvas>
+    <div id="tip" hidden></div>
+    <div id="loading" hidden><span class="spinner"></span> Loading clip…</div>
+    <p id="nothing" hidden>No animals were found in this clip.</p>
+    <form id="upload" hidden role="dialog" aria-labelledby="upload-title">
+      <h2 id="upload-title">Try your own footage</h2>
+      <p>A fixed-camera clip works best: camera traps, bird feeders, wildlife cameras. Up to 60 seconds and 50 MB.</p>
+      <input id="upload-file" type="file" accept="video/*" required>
+      <label class="check"><input id="upload-agree" type="checkbox" required> I have the right to share this footage.</label>
+      <p class="small">Your clip is processed on our server, visible only through its own link, and deleted after 24 hours.
+        People are never tracked, and anything that looks like a person is pixelated.</p>
+      <div class="row">
+        <button id="upload-go" type="submit" class="wide">Upload</button>
+        <button id="upload-cancel" type="button" class="wide">Cancel</button>
+      </div>
+      <p id="upload-status" role="status"></p>
+    </form>
+    <div id="intro" hidden role="dialog" aria-labelledby="intro-title">
+      <h2 id="intro-title">How to read this</h2>
+      <ul>
+        <li>Each block is one video clip. <b>Time runs left to right</b>; the picture is at each end.</li>
+        <li>The sharp sheet is the current moment. Drag the bar at the bottom, or press ← →, to move it.</li>
+        <li>Each <b>coloured tube is one animal's visit</b>, found and traced by OpenCV. Click one to jump to it.</li>
+        <li>Search, for example “badger”, to light up matching animals in every clip, or ask the agent a question.</li>
+      </ul>
+      <p>Drag to turn the block, scroll to zoom.</p>
+      <button id="intro-close">Got it</button>
+    </div>
+  </div>
   <aside>
     <section id="agent">
       <h2>Ask the agent</h2>
@@ -32,10 +63,11 @@
       <ol id="steps" aria-live="polite"></ol>
     </section>
     <h2 id="tracks-title">Animals found</h2>
+    <p id="search-note" hidden>None of the animals clearly looks like this. Showing the closest.</p>
     <ol id="tracks"></ol>
     <p id="empty" hidden>Nothing found in this clip.</p>
     <section id="elsewhere" hidden>
-      <h2>Best matches in other clips</h2>
+      <h2 id="elsewhere-title">Matches in other clips</h2>
       <ol id="others"></ol>
     </section>
   </aside>

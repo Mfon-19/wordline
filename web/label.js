@@ -145,7 +145,7 @@ function tick(ms) {
   requestAnimationFrame(tick);
 }
 
-const clips = await (await fetch("data/index.json")).json();
+const clips = (await (await fetch("data/index.json")).json()).map((c) => c.clip);
 for (const c of clips) $("clip").add(new Option(c.replaceAll("_", " "), c));
 requestAnimationFrame(tick);
 load(clips[0]);

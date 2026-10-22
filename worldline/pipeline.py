@@ -157,8 +157,8 @@ def flow_shift(prev, cur, box):
 
 
 def track_clip(work, grays, fg, fg_strict, cuts, det):
-    """Detect and follow objects. Returns raw tracks, detector time (ms), people skipped."""
-    live, done, det_ms, people = [], [], 0.0, 0
+    """Detect and follow objects. Returns raw tracks, detector time (ms), and (frame, box) for each person seen."""
+    live, done, det_ms, people = [], [], 0.0, []
 
     def new_track(f, box, hit, conf=None, label=None):
         live.append({"start": f, "box": np.asarray(box, float), "miss": 0, "hit": hit, "motion_born": hit == "m", "anchor": centre(box), "stall": 0,
@@ -181,7 +181,7 @@ def track_clip(work, grays, fg, fg_strict, cuts, det):
         t0 = time.time()
         dets = det(frame, conf=CONF)
         det_ms += (time.time() - t0) * 1000
-        people += sum(1 for d in dets if d[2] == "person")
+        people += [(f, d[0]) for d in dets if d[2] == "person"]
         dets = [d for d in dets if d[2] in ANIMALS]
         pairs = sorted(((iou(tr["box"], d[0]), ti, di) for ti, tr in enumerate(live) for di, d in enumerate(dets)), reverse=True)
         used = set()
@@ -342,8 +342,39 @@ def settings(**overrides):
             globals().update(old)
 
 
-def run(path, out_dir=None, embed=True, start_s=None, end_s=None):
+def blur_people(frames, people, scale, spread=2):
+    """People are never tracked, and are pixelated out of the stored frames the viewer shows.
+
+    Each detected person's box (grown by a margin) is blurred in that frame and the `spread`
+    frames either side, in case the detector missed them there.
+    """
+    for f, (x, y, w, h) in people:
+        for g in range(max(0, f - spread), min(len(frames), f + spread + 1)):
+            img = frames[g]
+            H, W = img.shape[:2]
+            x0, y0 = int(max(0, (x - 0.2 * w) * scale)), int(max(0, (y - 0.2 * h) * scale))
+            x1, y1 = int(min(W, (x + 1.2 * w) * scale)), int(min(H, (y + 1.2 * h) * scale))
+            if x1 > x0 and y1 > y0:
+                # pixelate to a few blocks, then soften: unrecognisable, but the scene stays readable
+                roi = img[y0:y1, x0:x1]
+                tiny = cv2.resize(roi, (max(1, (x1 - x0) // 8), max(1, (y1 - y0) // 8)), interpolation=cv2.INTER_AREA)
+                img[y0:y1, x0:x1] = cv2.GaussianBlur(cv2.resize(tiny, (x1 - x0, y1 - y0), interpolation=cv2.INTER_NEAREST), (5, 5), 0)
+
+
+def write_index(data_dir):
+    """List of processed clips for the viewer: name, length and number of tubes."""
+    rows = []
+    for f in sorted(Path(data_dir).glob("*/worldline.json")):
+        m = json.loads(f.read_text())
+        rows.append({"clip": f.parent.name, "duration_s": m["duration_s"], "tubes": len(m["tracks"])})
+    (Path(data_dir) / "index.json").write_text(json.dumps(rows))
+
+
+def run(path, out_dir=None, embed=True, start_s=None, end_s=None, hide_people=False):
+    """Process a clip. hide_people pixelates anything detected as a person in the stored frames;
+    it is used for visitors' uploads (the detector also mistakes some animals for people)."""
     path = Path(path)
+    shared = out_dir is None  # only clips in the shared data folder are listed in the viewer's index
     out_dir = Path(out_dir) if out_dir else ROOT / "web" / "data" / path.stem
     out_dir.mkdir(parents=True, exist_ok=True)
     t_start = time.time()
@@ -352,7 +383,9 @@ def run(path, out_dir=None, embed=True, start_s=None, end_s=None):
     grays = [cv2.cvtColor(w, cv2.COLOR_BGR2GRAY) for w in work]
     cuts = find_cuts(grays)
     fg, fg_strict = foreground(grays)
-    raw, det_ms, people_ignored = track_clip(work, grays, fg, fg_strict, cuts, Detector())
+    raw, det_ms, people = track_clip(work, grays, fg, fg_strict, cuts, Detector())
+    if hide_people:
+        blur_people(small_frames, people, small_frames[0].shape[1] / WORK_W)
 
     T = len(times)
     H, W = work[0].shape[:2]
@@ -392,7 +425,7 @@ def run(path, out_dir=None, embed=True, start_s=None, end_s=None):
         "atlas": {"file": "atlas.jpg", "cols": cols, "rows": rows},
         "window": [start_s, end_s] if start_s is not None or end_s is not None else None,
         "cuts": sorted(cuts), "tracks": tracks,
-        "stats": {"detector_ms_per_frame": round(det_ms / max(T, 1), 1), "people_ignored": people_ignored,
+        "stats": {"detector_ms_per_frame": round(det_ms / max(T, 1), 1), "people_ignored": len(people), "people_hidden": bool(hide_people and people),
                   "raw_tracks": len(raw), "total_s": round(time.time() - t_start, 1)},
     }
     (out_dir / "worldline.json").write_text(json.dumps(meta, separators=(",", ":")))
@@ -401,8 +434,8 @@ def run(path, out_dir=None, embed=True, start_s=None, end_s=None):
         t0 = time.time()
         emb.save(out_dir / "embeddings.json", emb.embed_tubes(path, meta))
         meta["stats"]["embed_s"] = round(time.time() - t0, 1)
-    done = sorted(p.parent.name for p in out_dir.parent.glob("*/worldline.json"))
-    (out_dir.parent / "index.json").write_text(json.dumps(done))
+    if shared:
+        write_index(out_dir.parent)
     return meta
 
 
