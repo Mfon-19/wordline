@@ -37,6 +37,9 @@ def fetch(url, dst):
 def main():
     assets = json.loads((ROOT / "assets.json").read_text())
     fetch(assets["model"]["url"], ROOT / assets["model"]["path"])
+    md = ROOT / assets["megadetector"]["path"]
+    if not md.exists():
+        print(f"missing {md.relative_to(ROOT)}: run {assets['megadetector']['made_by']} to make it")
     for name, title in assets["clips"].items():
         fetch(COMMONS + urllib.parse.quote(title), ROOT / "clips" / f"{name}{Path(title).suffix}")
 

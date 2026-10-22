@@ -1,4 +1,11 @@
-"""YOLOX-S object detector run through OpenCV 5's DNN module (CPU)."""
+"""Object detectors run through OpenCV 5's DNN module (CPU).
+
+YOLOX-S: general objects (80 everyday categories), small and fast.
+MegaDetector v5a: trained on camera-trap images, three classes (animal, person, vehicle).
+WORLDLINE_DETECTOR chooses which one the pipeline uses (megadetector by default, or yolox).
+"""
+import logging
+import os
 from pathlib import Path
 
 import cv2
@@ -13,7 +20,8 @@ COCO = ("person bicycle car motorcycle airplane bus train truck boat trafficligh
         "banana apple sandwich orange broccoli carrot hotdog pizza donut cake chair couch "
         "pottedplant bed diningtable toilet tv laptop mouse remote keyboard cellphone microwave "
         "oven toaster sink refrigerator book clock vase scissors teddybear hairdrier toothbrush").split()
-ANIMALS = set(COCO[14:24])
+ANIMALS = set(COCO[14:24]) | {"animal"}
+MEGADETECTOR = Path(__file__).resolve().parent.parent / "models" / "md_v5a_640.onnx"
 
 
 def _grid():
@@ -48,3 +56,36 @@ class Detector:
         boxes = np.concatenate((xy - wh / 2, wh), 1) / r
         keep = cv2.dnn.NMSBoxes(boxes.tolist(), sc.tolist(), conf, nms)
         return [(boxes[i].astype(int), float(sc[i]), COCO[cls[i]]) for i in np.array(keep).flatten()]
+
+
+class MegaDetector:
+    """MegaDetector v5a (YOLOv5x6), exported to ONNX at 640 px. Outputs are already decoded boxes."""
+    LABELS = ("animal", "person", "vehicle")
+    every = 3  # about 8x slower than YOLOX-S, so it runs on every 3rd sampled frame
+
+    def __init__(self, model=MEGADETECTOR):
+        self.net = cv2.dnn.readNetFromONNX(str(model), cv2.dnn.ENGINE_CLASSIC)
+
+    def __call__(self, frame, conf=0.2, nms=0.45):
+        h, w = frame.shape[:2]
+        r = min(SIZE / h, SIZE / w)
+        canvas = np.full((SIZE, SIZE, 3), 114, np.uint8)
+        canvas[: int(h * r), : int(w * r)] = cv2.resize(frame, (int(w * r), int(h * r)))
+        self.net.setInput(cv2.dnn.blobFromImage(canvas, 1 / 255.0, (SIZE, SIZE), swapRB=True))
+        out = self.net.forward()[0]
+        scores = out[:, 4:5] * out[:, 5:]
+        cls, sc = scores.argmax(1), scores.max(1)
+        boxes = np.concatenate((out[:, :2] - out[:, 2:4] / 2, out[:, 2:4]), 1) / r
+        keep = cv2.dnn.NMSBoxes(boxes.tolist(), sc.tolist(), conf, nms)
+        return [(boxes[i].astype(int), float(sc[i]), self.LABELS[cls[i]]) for i in np.array(keep).flatten()]
+
+
+def make_detector():
+    """MegaDetector by default (it finds more camera-trap animals); YOLOX-S if asked for, or if the
+    MegaDetector file hasn't been made (scripts/export_megadetector.sh)."""
+    choice = os.environ.get("WORLDLINE_DETECTOR", "megadetector")
+    if choice == "megadetector" and MEGADETECTOR.exists():
+        return MegaDetector()
+    if choice == "megadetector":
+        logging.getLogger("worldline").warning("%s missing; falling back to YOLOX-S", MEGADETECTOR)
+    return Detector()

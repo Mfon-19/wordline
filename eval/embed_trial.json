@@ -16,8 +16,23 @@
    "species": "badger"
   },
   {
+   "clip": "badger_cubs",
+   "tube": 4,
+   "species": "badger"
+  },
+  {
+   "clip": "badger_cubs",
+   "tube": 6,
+   "species": "badger"
+  },
+  {
    "clip": "badger_snow",
    "tube": 1,
+   "species": "badger"
+  },
+  {
+   "clip": "badger_snow",
+   "tube": 2,
    "species": "badger"
   },
   {
@@ -32,17 +47,7 @@
   },
   {
    "clip": "coyote_family",
-   "tube": 3,
-   "species": "coyote"
-  },
-  {
-   "clip": "coyote_family",
    "tube": 4,
-   "species": "coyote"
-  },
-  {
-   "clip": "coyote_family",
-   "tube": 5,
    "species": "coyote"
   },
   {
@@ -51,6 +56,16 @@
    "species": "coyote"
   },
   {
+   "clip": "coyote_family",
+   "tube": 7,
+   "species": "coyote"
+  },
+  {
+   "clip": "coyote_family",
+   "tube": 8,
+   "species": "coyote"
+  },
+  {
    "clip": "jaguarundi",
    "tube": 1,
    "species": "jaguarundi"
@@ -78,11 +93,16 @@
   {
    "clip": "moorhen",
    "tube": 2,
+   "species": "moorhen"
+  },
+  {
+   "clip": "moorhen",
+   "tube": 3,
    "species": "moorhen"
   },
   {
    "clip": "moose",
-   "tube": 4,
+   "tube": 2,
    "species": "moose"
   },
   {
@@ -106,6 +126,11 @@
    "species": "mountain lion"
   },
   {
+   "clip": "p22_feeding",
+   "tube": 5,
+   "species": "mountain lion"
+  },
+  {
    "clip": "red_fox",
    "tube": 1,
    "species": "red fox"
@@ -117,6 +142,11 @@
   },
   {
    "clip": "roe_deer",
+   "tube": 1,
+   "species": "roe deer"
+  },
+  {
+   "clip": "roe_deer_male",
    "tube": 1,
    "species": "roe deer"
   }
@@ -141,40 +171,46 @@
   "squirrel"
  ],
  "crop": {
-  "top1": 0.7916666666666666,
-  "top3": 0.875,
+  "top1": 0.7666666666666667,
+  "top3": 0.8666666666666667,
   "search_hit1": 0.8888888888888888,
   "searches": 9,
   "predicted": [
    "badger",
    "badger",
+   "bear",
+   "badger",
+   "badger",
    "badger",
    "badger",
    "coyote",
    "coyote",
    "raccoon",
-   "coyote",
+   "squirrel",
    "coyote",
    "coyote",
    "jaguarundi",
    "jaguarundi",
    "mallard duck",
    "mallard duck",
+   "moorhen",
    "moorhen",
    "moorhen",
    "moose",
    "mountain lion",
    "mountain lion",
-   "raccoon",
+   "mountain lion",
+   "dog",
    "dog",
    "raccoon",
    "dog",
+   "roe deer",
    "roe deer"
   ]
  },
  "whole": {
-  "top1": 0.6666666666666666,
-  "top3": 0.9166666666666666,
+  "top1": 0.7,
+  "top3": 0.9333333333333333,
   "search_hit1": 0.7777777777777778,
   "searches": 9,
   "predicted": [
@@ -182,14 +218,18 @@
    "badger",
    "badger",
    "badger",
-   "coyote",
+   "badger",
+   "badger",
+   "badger",
    "coyote",
    "coyote",
    "coyote",
    "raccoon",
-   "squirrel",
+   "coyote",
+   "raccoon",
    "jaguarundi",
    "jaguarundi",
+   "mallard duck",
    "mallard duck",
    "mallard duck",
    "mallard duck",
@@ -197,13 +237,15 @@
    "moose",
    "mountain lion",
    "mountain lion",
+   "mountain lion",
    "dog",
    "dog",
    "coyote",
    "coyote",
+   "roe deer",
    "roe deer"
   ]
  },
- "ms_per_image": 808.6647652089596,
- "total_s": 195.2284801006317
+ "ms_per_image": 698.105858763059,
+ "total_s": 209.37505793571472
 }

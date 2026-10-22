@@ -20,5 +20,13 @@
     "p22_feeding": "P-22_Feeding_(32435243406).webm",
     "cougar_call": "Female_Cougar_Estrous_Call.webm",
     "small_mammals": "Optimising-Camera-Traps-for-Monitoring-Small-Mammals-pone.0067940.s002.ogv"
+  },
+  "megadetector": {
+    "path": "models/md_v5a_640.onnx",
+    "made_by": "scripts/export_megadetector.sh",
+    "weights": "https://huggingface.co/agentmorris/megadetector/resolve/main/md_v5a.0.1.pt",
+    "weights_sha256_prefix": "fe3e90e4b1955821",
+    "licence": "MegaDetector code MIT; see https://github.com/agentmorris/MegaDetector",
+    "source": "https://github.com/agentmorris/MegaDetector"
   }
 }

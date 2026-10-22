@@ -3,18 +3,18 @@
   "clips": 14,
   "verified_clips": 0,
   "animals": 21,
-  "animals_found": 19,
-  "animal_recall": 0.9047619047619048,
-  "tubes": 34,
+  "animals_found": 20,
+  "animal_recall": 0.9523809523809523,
+  "tubes": 41,
   "false_tubes": 6,
-  "tube_precision": 0.8235294117647058,
-  "presence_precision": 0.9312623925974884,
-  "presence_recall": 0.9203135205747878,
-  "empty_correctly_skipped": 0.7907444668008048,
-  "mean_coverage": 0.7874972232395704,
-  "tubes_per_found_animal": 1.631578947368421,
+  "tube_precision": 0.8536585365853658,
+  "presence_precision": 0.8647540983606558,
+  "presence_recall": 0.9647289353363815,
+  "empty_correctly_skipped": 0.5352112676056338,
+  "mean_coverage": 0.8868857566737512,
+  "tubes_per_found_animal": 1.9,
   "median_enter_err_s": 0.32,
-  "median_exit_err_s": 0.26699999999999946
+  "median_exit_err_s": 0.2600000000000001
  },
  "clips": {
   "badger_cubs": {
@@ -27,11 +27,11 @@
    "found": 2,
    "coverage": [
     0.98828125,
-    0.6927374301675978
+    0.7932960893854749
    ],
    "fragments": [
     2,
-    3
+    5
    ],
    "enter_err": [
     0.367,
@@ -41,69 +41,69 @@
     0.0,
     9.066000000000003
    ],
-   "tubes": 3,
-   "false_tubes": 0,
+   "tubes": 6,
+   "false_tubes": 1,
    "verified": false
   },
   "badger_snow": {
    "frames": 51,
-   "tp": 39,
+   "tp": 46,
    "fp": 0,
-   "fn": 12,
+   "fn": 5,
    "tn": 0,
    "animals": 1,
    "found": 1,
    "coverage": [
-    0.7647058823529411
+    0.9019607843137255
    ],
    "fragments": [
-    1
+    2
    ],
    "enter_err": [
-    1.2
+    0.5
    ],
    "exit_err": [
     0.0
    ],
-   "tubes": 1,
+   "tubes": 2,
    "false_tubes": 0,
    "verified": false
   },
   "cougar_call": {
    "frames": 150,
    "tp": 0,
-   "fp": 0,
+   "fp": 150,
    "fn": 0,
-   "tn": 150,
+   "tn": 0,
    "animals": 0,
    "found": 0,
    "coverage": [],
    "fragments": [],
    "enter_err": [],
    "exit_err": [],
-   "tubes": 0,
-   "false_tubes": 0,
+   "tubes": 1,
+   "false_tubes": 1,
    "verified": false
   },
   "coyote_family": {
    "frames": 256,
    "tp": 162,
-   "fp": 11,
+   "fp": 45,
    "fn": 1,
-   "tn": 82,
+   "tn": 48,
    "animals": 4,
    "found": 4,
    "coverage": [
     1.0,
-    0.7931034482758621,
+    0.9137931034482759,
     1.0,
     1.0
    ],
    "fragments": [
     2,
+    2,
     1,
-    1,
-    2
+    1
    ],
    "enter_err": [
     0.0,
@@ -112,21 +112,21 @@
     0.0
    ],
    "exit_err": [
-    0.5340000000000003,
+    0.9010000000000002,
     0.13299999999999912,
-    0.267000000000003,
-    0.26699999999999946
+    0.40000000000000213,
+    0.5
    ],
-   "tubes": 6,
-   "false_tubes": 0,
+   "tubes": 8,
+   "false_tubes": 2,
    "verified": false
   },
   "jaguarundi": {
    "frames": 150,
    "tp": 47,
-   "fp": 53,
+   "fp": 2,
    "fn": 0,
-   "tn": 50,
+   "tn": 101,
    "animals": 1,
    "found": 1,
    "coverage": [
@@ -139,31 +139,31 @@
     0.0
    ],
    "exit_err": [
-    3.1000000000000005
+    0.20000000000000018
    ],
-   "tubes": 3,
-   "false_tubes": 1,
+   "tubes": 2,
+   "false_tubes": 0,
    "verified": false
   },
   "mallard": {
    "frames": 100,
-   "tp": 83,
-   "fp": 11,
-   "fn": 0,
-   "tn": 6,
+   "tp": 53,
+   "fp": 0,
+   "fn": 30,
+   "tn": 17,
    "animals": 1,
    "found": 1,
    "coverage": [
-    1.0
+    0.6024096385542169
    ],
    "fragments": [
     2
    ],
    "enter_err": [
-    0.0
+    1.72
    ],
    "exit_err": [
-    1.120000000000001
+    1.2799999999999994
    ],
    "tubes": 2,
    "false_tubes": 0,
@@ -171,25 +171,25 @@
   },
   "moorhen": {
    "frames": 100,
-   "tp": 93,
-   "fp": 0,
-   "fn": 4,
-   "tn": 3,
+   "tp": 97,
+   "fp": 3,
+   "fn": 0,
+   "tn": 0,
    "animals": 1,
    "found": 1,
    "coverage": [
-    0.8041237113402062
+    0.7835051546391752
    ],
    "fragments": [
-    2
+    3
    ],
    "enter_err": [
-    0.39999999999999997
+    0.32
    ],
    "exit_err": [
     0.0
    ],
-   "tubes": 2,
+   "tubes": 3,
    "false_tubes": 0,
    "verified": false
   },
@@ -202,50 +202,50 @@
    "animals": 1,
    "found": 1,
    "coverage": [
-    0.9832402234636871
+    1.0
    ],
    "fragments": [
     1
    ],
    "enter_err": [
-    0.3
+    0.0
    ],
    "exit_err": [
     0.0
    ],
-   "tubes": 5,
-   "false_tubes": 4,
+   "tubes": 2,
+   "false_tubes": 1,
    "verified": false
   },
   "p22_feeding": {
    "frames": 256,
-   "tp": 221,
+   "tp": 252,
    "fp": 3,
-   "fn": 32,
+   "fn": 1,
    "tn": 0,
    "animals": 3,
    "found": 3,
    "coverage": [
     1.0,
-    0.6145833333333334,
-    0.9230769230769231
+    1.0,
+    0.989010989010989
    ],
    "fragments": [
     1,
-    2,
+    3,
     2
    ],
    "enter_err": [
     0.0,
     22.155,
-    1.9349999999999952
+    0.6340000000000003
    ],
    "exit_err": [
     17.651000000000003,
-    8.007999999999996,
+    0.6340000000000003,
     0.0
    ],
-   "tubes": 4,
+   "tubes": 5,
    "false_tubes": 0,
    "verified": false
   },
@@ -258,7 +258,7 @@
    "animals": 2,
    "found": 2,
    "coverage": [
-    0.5333333333333333,
+    1.0,
     0.9696969696969697
    ],
    "fragments": [
@@ -279,14 +279,14 @@
   },
   "roe_deer": {
    "frames": 60,
-   "tp": 57,
+   "tp": 55,
    "fp": 0,
-   "fn": 3,
+   "fn": 5,
    "tn": 0,
    "animals": 1,
    "found": 1,
    "coverage": [
-    0.95
+    0.9166666666666666
    ],
    "fragments": [
     1
@@ -295,7 +295,7 @@
     0.32
    ],
    "exit_err": [
-    0.0
+    0.20000000000000018
    ],
    "tubes": 1,
    "false_tubes": 0,
@@ -303,47 +303,53 @@
   },
   "roe_deer_male": {
    "frames": 60,
-   "tp": 0,
+   "tp": 58,
    "fp": 0,
-   "fn": 60,
+   "fn": 2,
    "tn": 0,
    "animals": 1,
-   "found": 0,
+   "found": 1,
    "coverage": [
+    0.9666666666666667
+   ],
+   "fragments": [
+    1
+   ],
+   "enter_err": [
     0.0
    ],
-   "fragments": [],
-   "enter_err": [],
-   "exit_err": [],
-   "tubes": 0,
+   "exit_err": [
+    0.20000000000000018
+   ],
+   "tubes": 1,
    "false_tubes": 0,
    "verified": false
   },
   "small_mammals": {
    "frames": 250,
    "tp": 209,
-   "fp": 13,
+   "fp": 15,
    "fn": 5,
-   "tn": 23,
+   "tn": 21,
    "animals": 2,
    "found": 2,
    "coverage": [
-    0.6629834254143646,
-    0.7575757575757576
+    0.850828729281768,
+    0.8484848484848485
    ],
    "fragments": [
     3,
-    1
+    2
    ],
    "enter_err": [
     0.68,
     0.4799999999999969
    ],
    "exit_err": [
-    0.120000000000001,
-    0.4800000000000004
+    0.40000000000000213,
+    0.3200000000000003
    ],
-   "tubes": 4,
+   "tubes": 5,
    "false_tubes": 0,
    "verified": false
   },

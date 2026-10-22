@@ -21,7 +21,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from .detector import ANIMALS, Detector
+from .detector import ANIMALS, make_detector
 
 ROOT = Path(__file__).resolve().parent.parent
 WORK_W = 640       # width frames are analysed at
@@ -163,7 +163,7 @@ def track_clip(work, grays, fg, fg_strict, cuts, det):
     def new_track(f, box, hit, conf=None, label=None):
         live.append({"start": f, "box": np.asarray(box, float), "miss": 0, "hit": hit, "motion_born": hit == "m", "anchor": centre(box), "stall": 0,
                      "conf": [conf] if conf else [], "guesses": Counter([label] if label else []),
-                     "boxes": [], "fg": [], "src": ""})
+                     "boxes": [], "fg": [], "fg_strict": [], "src": ""})
 
     for f, frame in enumerate(work):
         # 1. carry every live track forward with optical flow; nothing survives a cut
@@ -178,8 +178,10 @@ def track_clip(work, grays, fg, fg_strict, cuts, det):
             tr["hit"] = ""
 
         # 2. detect, and attach detections to the tracks they overlap
+        # a slow detector runs on every DETECT_EVERY-th frame (and at cuts); flow and motion fill the gaps
         t0 = time.time()
-        dets = det(frame, conf=CONF)
+        every = getattr(det, "every", 1)
+        dets = det(frame, conf=CONF) if f % every == 0 or f in cuts else []
         det_ms += (time.time() - t0) * 1000
         people += [(f, d[0]) for d in dets if d[2] == "person"]
         dets = [d for d in dets if d[2] in ANIMALS]
@@ -225,6 +227,7 @@ def track_clip(work, grays, fg, fg_strict, cuts, det):
                 continue
             tr["boxes"].append(tr["box"].copy())
             tr["fg"].append(share(fg[f], tr["box"]))
+            tr["fg_strict"].append(share(fg_strict[f], tr["box"]))
             tr["src"] += tr["hit"] or "f"
             still.append(tr)
         live = still
@@ -251,6 +254,7 @@ def select(raw, width, cuts):
         elif n - src.count("f") < MIN_MOTION or (dets < 2 and travel(boxes[0], boxes[-1]) < MIN_TRAVEL):
             continue
         kept.append({"start": tr["start"], "end": tr["start"] + n - 1, "src": src, "boxes": boxes, "fg": fgs,
+                     "fg_strict": tr["fg_strict"][:n],
                      "conf": tr["conf"], "guesses": tr["guesses"]})
 
     kept.sort(key=lambda t: t["start"])
@@ -271,6 +275,7 @@ def select(raw, width, cuts):
         a, b = m["boxes"][-1], t["boxes"][0]
         m["boxes"] += [a + (b - a) * g / gap for g in range(1, gap)] + t["boxes"]  # bridge in a straight line
         m["fg"] += [0.0] * (gap - 1) + t["fg"]
+        m["fg_strict"] += [0.0] * (gap - 1) + t["fg_strict"]
         m["src"] += "g" * (gap - 1) + t["src"]
         m["end"], m["conf"], m["guesses"] = t["end"], m["conf"] + t["conf"], m["guesses"] + t["guesses"]
     return merged
@@ -383,7 +388,7 @@ def run(path, out_dir=None, embed=True, start_s=None, end_s=None, hide_people=Fa
     grays = [cv2.cvtColor(w, cv2.COLOR_BGR2GRAY) for w in work]
     cuts = find_cuts(grays)
     fg, fg_strict = foreground(grays)
-    raw, det_ms, people = track_clip(work, grays, fg, fg_strict, cuts, Detector())
+    raw, det_ms, people = track_clip(work, grays, fg, fg_strict, cuts, make_detector())
     if hide_people:
         blur_people(small_frames, people, small_frames[0].shape[1] / WORK_W)
 
@@ -405,7 +410,8 @@ def run(path, out_dir=None, embed=True, start_s=None, end_s=None, hide_people=Fa
             "dwell_s": round(times[t["end"]] - times[t["start"]], 2),
             "path_len": round(float(np.hypot(np.diff(cx), np.diff(cy) * H / W).sum()), 3),
             "conf": round(float(np.mean(t["conf"])), 3) if t["conf"] else None,
-            "det_share": round(dets / n, 3), "motion": round(float(np.mean(t["fg"])), 3), "src": t["src"],
+            "det_share": round(dets / n, 3), "motion": round(float(np.mean(t["fg"])), 3),
+            "motion_strict": round(float(np.mean(t["fg_strict"])), 3), "src": t["src"],
             "cx": np.round(cx, 4).tolist(), "cy": np.round(cy, 4).tolist(), "r": np.round(r, 4).tolist(),
         })
 
