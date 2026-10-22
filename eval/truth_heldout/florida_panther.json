@@ -1,0 +1,199 @@
+{
+ "clip": "florida_panther",
+ "verified": false,
+ "heldout": true,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-1.6 s, labelled before looking at the pipeline's output; not yet checked by a person.",
+ "note": "A family of panthers (an adult and kittens) crossing and overlapping; which animal is which after crossings is uncertain.",
+ "animals": [
+  {
+   "note": "adult",
+   "species": "mountain lion",
+   "points": [
+    [
+     0,
+     0.95,
+     0.62
+    ],
+    [
+     1.1,
+     0.85,
+     0.55
+    ],
+    [
+     2.4,
+     0.62,
+     0.52
+    ],
+    [
+     3.6,
+     0.57,
+     0.45
+    ],
+    [
+     6.0,
+     0.55,
+     0.48
+    ],
+    [
+     12.1,
+     0.57,
+     0.5
+    ],
+    [
+     17.1,
+     0.55,
+     0.5
+    ],
+    [
+     18.2,
+     0.31,
+     0.5
+    ],
+    [
+     24.3,
+     0.3,
+     0.52
+    ],
+    [
+     35.4,
+     0.3,
+     0.58
+    ]
+   ]
+  },
+  {
+   "note": "second large cat, close to the camera at first",
+   "species": "mountain lion",
+   "points": [
+    [
+     1.1,
+     0.75,
+     0.88
+    ],
+    [
+     2.4,
+     0.68,
+     0.85
+    ],
+    [
+     3.6,
+     0.58,
+     0.75
+    ],
+    [
+     4.9,
+     0.53,
+     0.62
+    ],
+    [
+     7.2,
+     0.6,
+     0.55
+    ]
+   ]
+  },
+  {
+   "note": "cat entering at right",
+   "species": "mountain lion",
+   "points": [
+    [
+     4.9,
+     0.96,
+     0.62
+    ],
+    [
+     6.0,
+     0.82,
+     0.57
+    ],
+    [
+     7.2,
+     0.68,
+     0.58
+    ]
+   ]
+  },
+  {
+   "note": "kitten that leaves at left",
+   "species": "mountain lion",
+   "points": [
+    [
+     7.2,
+     0.45,
+     0.55
+    ],
+    [
+     8.5,
+     0.4,
+     0.55
+    ],
+    [
+     12.1,
+     0.38,
+     0.55
+    ],
+    [
+     17.1,
+     0.35,
+     0.55
+    ],
+    [
+     18.2,
+     0.1,
+     0.55
+    ],
+    [
+     19.4,
+     0.05,
+     0.55
+    ]
+   ]
+  },
+  {
+   "note": "kitten that stays with the adult",
+   "species": "mountain lion",
+   "points": [
+    [
+     8.5,
+     0.47,
+     0.55
+    ],
+    [
+     12.1,
+     0.47,
+     0.55
+    ],
+    [
+     17.1,
+     0.45,
+     0.56
+    ],
+    [
+     18.2,
+     0.38,
+     0.58
+    ],
+    [
+     24.3,
+     0.38,
+     0.58
+    ],
+    [
+     26.8,
+     0.3,
+     0.6
+    ],
+    [
+     28.0,
+     0.13,
+     0.62
+    ],
+    [
+     29.3,
+     0.13,
+     0.6
+    ]
+   ]
+  }
+ ]
+}

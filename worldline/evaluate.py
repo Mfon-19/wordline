@@ -5,7 +5,8 @@ present from its first point to its last, moving in straight lines between them.
 A tube "covers" an animal in a frame when the animal's point lies within the tube's outline
 (with a 25% margin).
 
-Usage: python -m worldline.evaluate            (reads web/data/*/worldline.json)
+Usage: python -m worldline.evaluate              (development clips, eval/truth)
+       python -m worldline.evaluate --heldout    (held-out clips, eval/truth_heldout)
 """
 import json
 import sys
@@ -106,7 +107,10 @@ def evaluate(data_dir=ROOT / "web" / "data", truth_dir=ROOT / "eval" / "truth"):
 
 
 def main():
-    scores, total = evaluate()
+    # --heldout scores the clips kept back from all tuning (eval/truth_heldout), separately
+    heldout = "--heldout" in sys.argv
+    truth_dir = ROOT / "eval" / ("truth_heldout" if heldout else "truth")
+    scores, total = evaluate(truth_dir=truth_dir)
     print(f"{'clip':16s} {'animals':>7s} {'found':>5s} {'tubes':>5s} {'false':>5s} {'pres.P':>6s} {'pres.R':>6s}  checked")
     for name, c in scores.items():
         p, r = ratio(c["tp"], c["tp"] + c["fp"]), ratio(c["tp"], c["tp"] + c["fn"])
@@ -114,7 +118,7 @@ def main():
     print()
     for k, v in total.items():
         print(f"{k:26s} {v:.3f}" if isinstance(v, float) else f"{k:26s} {v}")
-    out = ROOT / "eval" / "results.json"
+    out = ROOT / "eval" / ("results_heldout.json" if heldout else "results.json")
     out.write_text(json.dumps({"summary": total, "clips": scores}, indent=1))
     return 0
 

@@ -1,0 +1,164 @@
+{
+ "tubes": [
+  {
+   "clip": "beavers",
+   "tube": 1,
+   "species": "beaver"
+  },
+  {
+   "clip": "beavers",
+   "tube": 2,
+   "species": "beaver"
+  },
+  {
+   "clip": "beavers",
+   "tube": 4,
+   "species": "beaver"
+  },
+  {
+   "clip": "beavers",
+   "tube": 7,
+   "species": "beaver"
+  },
+  {
+   "clip": "canada_geese",
+   "tube": 1,
+   "species": "goose"
+  },
+  {
+   "clip": "canada_geese",
+   "tube": 3,
+   "species": "goose"
+  },
+  {
+   "clip": "canada_geese",
+   "tube": 6,
+   "species": "goose"
+  },
+  {
+   "clip": "canada_geese",
+   "tube": 7,
+   "species": "goose"
+  },
+  {
+   "clip": "florida_panther",
+   "tube": 1,
+   "species": "mountain lion"
+  },
+  {
+   "clip": "florida_panther",
+   "tube": 2,
+   "species": "mountain lion"
+  },
+  {
+   "clip": "florida_panther",
+   "tube": 3,
+   "species": "mountain lion"
+  },
+  {
+   "clip": "florida_panther",
+   "tube": 4,
+   "species": "mountain lion"
+  },
+  {
+   "clip": "florida_panther",
+   "tube": 5,
+   "species": "mountain lion"
+  },
+  {
+   "clip": "florida_panther",
+   "tube": 6,
+   "species": "mountain lion"
+  },
+  {
+   "clip": "florida_panther",
+   "tube": 7,
+   "species": "mountain lion"
+  },
+  {
+   "clip": "gray_fox",
+   "tube": 1,
+   "species": "gray fox"
+  },
+  {
+   "clip": "weasel",
+   "tube": 1,
+   "species": "weasel"
+  },
+  {
+   "clip": "wolf",
+   "tube": 1,
+   "species": "wolf"
+  }
+ ],
+ "vocab": [
+  "beaver",
+  "goose",
+  "gray fox",
+  "mountain lion",
+  "weasel",
+  "wolf",
+  "domestic cat",
+  "dog",
+  "rabbit",
+  "raccoon",
+  "bear",
+  "horse",
+  "hedgehog",
+  "squirrel"
+ ],
+ "crop": {
+  "top1": 0.7777777777777778,
+  "top3": 0.9444444444444444,
+  "search_hit1": 0.8333333333333334,
+  "searches": 6,
+  "predicted": [
+   "beaver",
+   "bear",
+   "beaver",
+   "bear",
+   "goose",
+   "goose",
+   "goose",
+   "goose",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "raccoon",
+   "squirrel",
+   "wolf"
+  ]
+ },
+ "whole": {
+  "top1": 0.8333333333333334,
+  "top3": 0.8888888888888888,
+  "search_hit1": 0.6666666666666666,
+  "searches": 6,
+  "predicted": [
+   "beaver",
+   "beaver",
+   "beaver",
+   "beaver",
+   "goose",
+   "goose",
+   "goose",
+   "goose",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "mountain lion",
+   "squirrel",
+   "beaver",
+   "dog"
+  ]
+ },
+ "ms_per_image": 746.4732891983456,
+ "total_s": 135.33122205734253
+}

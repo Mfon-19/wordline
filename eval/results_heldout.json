@@ -1,0 +1,206 @@
+{
+ "summary": {
+  "clips": 6,
+  "verified_clips": 0,
+  "animals": 17,
+  "animals_found": 16,
+  "animal_recall": 0.9411764705882353,
+  "tubes": 29,
+  "false_tubes": 11,
+  "tube_precision": 0.6206896551724138,
+  "presence_precision": 0.8926615553121577,
+  "presence_recall": 0.9854897218863361,
+  "empty_correctly_skipped": 0.5933609958506224,
+  "mean_coverage": 0.8619542501051193,
+  "tubes_per_found_animal": 2.0625,
+  "median_enter_err_s": 0.4615,
+  "median_exit_err_s": 1.0504999999999987
+ },
+ "clips": {
+  "beavers": {
+   "frames": 256,
+   "tp": 127,
+   "fp": 65,
+   "fn": 0,
+   "tn": 64,
+   "animals": 4,
+   "found": 4,
+   "coverage": [
+    1.0,
+    1.0,
+    1.0,
+    0.925
+   ],
+   "fragments": [
+    2,
+    1,
+    1,
+    1
+   ],
+   "enter_err": [
+    1.435,
+    0.7010000000000005,
+    2.669999999999998,
+    0.5339999999999989
+   ],
+   "exit_err": [
+    1.4349999999999996,
+    0.5329999999999977,
+    4.27,
+    0.9009999999999962
+   ],
+   "tubes": 9,
+   "false_tubes": 5,
+   "verified": false
+  },
+  "canada_geese": {
+   "frames": 100,
+   "tp": 98,
+   "fp": 0,
+   "fn": 2,
+   "tn": 0,
+   "animals": 4,
+   "found": 4,
+   "coverage": [
+    0.84,
+    0.98,
+    0.53,
+    0.93
+   ],
+   "fragments": [
+    1,
+    1,
+    3,
+    4
+   ],
+   "enter_err": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "exit_err": [
+    0.0,
+    0.0,
+    1.200000000000001,
+    0.0
+   ],
+   "tubes": 10,
+   "false_tubes": 6,
+   "verified": false
+  },
+  "florida_panther": {
+   "frames": 256,
+   "tp": 250,
+   "fp": 0,
+   "fn": 6,
+   "tn": 0,
+   "animals": 5,
+   "found": 5,
+   "coverage": [
+    0.95703125,
+    0.9555555555555556,
+    1.0,
+    1.0,
+    0.9403973509933775
+   ],
+   "fragments": [
+    6,
+    4,
+    1,
+    2,
+    3
+   ],
+   "enter_err": [
+    0.417,
+    0.29200000000000004,
+    0.9580000000000002,
+    4.583,
+    5.833
+   ],
+   "exit_err": [
+    0.4170000000000016,
+    27.708,
+    7.75,
+    15.540999999999997,
+    5.665999999999997
+   ],
+   "tubes": 7,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "gray_fox": {
+   "frames": 256,
+   "tp": 252,
+   "fp": 4,
+   "fn": 0,
+   "tn": 0,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    0.9285714285714286
+   ],
+   "fragments": [
+    1
+   ],
+   "enter_err": [
+    0.506
+   ],
+   "exit_err": [
+    0.0
+   ],
+   "tubes": 1,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "weasel": {
+   "frames": 100,
+   "tp": 14,
+   "fp": 3,
+   "fn": 4,
+   "tn": 79,
+   "animals": 1,
+   "found": 1,
+   "coverage": [
+    0.6666666666666666
+   ],
+   "fragments": [
+    1
+   ],
+   "enter_err": [
+    0.3
+   ],
+   "exit_err": [
+    0.40000000000000013
+   ],
+   "tubes": 1,
+   "false_tubes": 0,
+   "verified": false
+  },
+  "wolf": {
+   "frames": 100,
+   "tp": 74,
+   "fp": 26,
+   "fn": 0,
+   "tn": 0,
+   "animals": 2,
+   "found": 1,
+   "coverage": [
+    1.0,
+    0.0
+   ],
+   "fragments": [
+    1
+   ],
+   "enter_err": [
+    0.0
+   ],
+   "exit_err": [
+    6.0
+   ],
+   "tubes": 1,
+   "false_tubes": 0,
+   "verified": false
+  }
+ }
+}

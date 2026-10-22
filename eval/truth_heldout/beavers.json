@@ -1,0 +1,138 @@
+{
+ "clip": "beavers",
+ "verified": false,
+ "heldout": true,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-1.6 s, labelled before looking at the pipeline's output; not yet checked by a person.",
+ "note": "Edited video with captions; night infrared on water. The wrestling pair overlap heavily.",
+ "animals": [
+  {
+   "note": "beaver swimming left",
+   "species": "beaver",
+   "points": [
+    [
+     1.4,
+     0.93,
+     0.65
+    ],
+    [
+     3.0,
+     0.68,
+     0.62
+    ],
+    [
+     4.6,
+     0.58,
+     0.5
+    ],
+    [
+     6.2,
+     0.48,
+     0.52
+    ],
+    [
+     7.9,
+     0.42,
+     0.52
+    ]
+   ]
+  },
+  {
+   "note": "wrestling beaver, front",
+   "species": "beaver",
+   "points": [
+    [
+     20.0,
+     0.42,
+     0.62
+    ],
+    [
+     21.9,
+     0.52,
+     0.62
+    ],
+    [
+     23.3,
+     0.45,
+     0.65
+    ],
+    [
+     24.9,
+     0.47,
+     0.6
+    ],
+    [
+     26.5,
+     0.55,
+     0.68
+    ],
+    [
+     28.1,
+     0.52,
+     0.6
+    ],
+    [
+     28.6,
+     0.52,
+     0.6
+    ]
+   ]
+  },
+  {
+   "note": "wrestling beaver, behind",
+   "species": "beaver",
+   "points": [
+    [
+     21.9,
+     0.38,
+     0.55
+    ],
+    [
+     23.3,
+     0.42,
+     0.55
+    ],
+    [
+     24.9,
+     0.37,
+     0.5
+    ]
+   ]
+  },
+  {
+   "note": "beaver close to the camera",
+   "species": "beaver",
+   "points": [
+    [
+     35.9,
+     0.25,
+     0.85
+    ],
+    [
+     37.5,
+     0.35,
+     0.85
+    ],
+    [
+     38.9,
+     0.2,
+     0.9
+    ],
+    [
+     40.5,
+     0.35,
+     0.92
+    ],
+    [
+     42.1,
+     0.65,
+     0.9
+    ],
+    [
+     42.8,
+     0.7,
+     0.9
+    ]
+   ]
+  }
+ ]
+}

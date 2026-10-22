@@ -4,7 +4,7 @@ For every tube that matches a labelled animal, OpenCV crops the animal from a fe
 frames (using the tube's outline), EmbeddingGemma 2 embeds the crops, and the crops are
 compared with typed species names. Also run on the whole frame, to see what cropping adds.
 
-Usage: python scripts/embed_trial.py
+Usage: python scripts/embed_trial.py [--heldout]
 """
 import json
 import sys
@@ -18,13 +18,15 @@ sys.path.insert(0, str(ROOT))
 from worldline import embed  # noqa: E402
 from worldline.evaluate import covers, truth_positions  # noqa: E402
 
+HELDOUT = "--heldout" in sys.argv          # score the held-out clips (eval/truth_heldout) instead
+TRUTH = "truth_heldout" if HELDOUT else "truth"
 DISTRACTORS = ["domestic cat", "dog", "rabbit", "raccoon", "bear", "horse", "hedgehog", "squirrel"]
 
 
 def labelled_tubes():
     """(clip, tube, species) for every tube whose frames mostly cover one labelled animal."""
     rows = []
-    for tf in sorted((ROOT / "eval" / "truth").glob("*.json")):
+    for tf in sorted((ROOT / "eval" / TRUTH).glob("*.json")):
         truth = json.loads(tf.read_text())
         data = json.loads((ROOT / "web" / "data" / tf.stem / "worldline.json").read_text())
         aspect = data["frame_w"] / data["frame_h"]
@@ -79,7 +81,7 @@ def main():
         print(f"  {clip:15s} tube {tb['id']}: truth {s:13s} cropped -> {p:13s} whole -> {q}")
     out = {"tubes": [{"clip": c, "tube": tb["id"], "species": s} for c, _, tb, s in rows], "vocab": vocab, **res,
            "ms_per_image": 1000 * t_img / n_img, "total_s": time.time() - t0}
-    (ROOT / "eval" / "embed_trial.json").write_text(json.dumps(out, indent=1, default=float))
+    (ROOT / "eval" / ("embed_trial_heldout.json" if HELDOUT else "embed_trial.json")).write_text(json.dumps(out, indent=1, default=float))
 
 
 if __name__ == "__main__":

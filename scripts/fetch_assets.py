@@ -40,7 +40,7 @@ def main():
     md = ROOT / assets["megadetector"]["path"]
     if not md.exists():
         print(f"missing {md.relative_to(ROOT)}: run {assets['megadetector']['made_by']} to make it")
-    for name, title in assets["clips"].items():
+    for name, title in {**assets["clips"], **assets.get("heldout", {})}.items():
         fetch(COMMONS + urllib.parse.quote(title), ROOT / "clips" / f"{name}{Path(title).suffix}")
 
 

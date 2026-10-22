@@ -28,5 +28,14 @@
     "weights_sha256_prefix": "fe3e90e4b1955821",
     "licence": "MegaDetector code MIT; see https://github.com/agentmorris/MegaDetector",
     "source": "https://github.com/agentmorris/MegaDetector"
-  }
+  },
+  "heldout": {
+    "florida_panther": "Florida_Panther_Trail_cam.webm",
+    "gray_fox": "Gray_fox_(Urocyon_cinereoargenteus)_in_New_Mexico.webm",
+    "weasel": "Weasel_on_Trail_Camera.webm",
+    "canada_geese": "Canada_Geese_on_Trail_Camera_(50222797812).webm",
+    "wolf": "Wolf_on_Trail_Camera.webm",
+    "beavers": "Doty_Ravine_trail_cam_-_beaver_wrestling.webm"
+  },
+  "heldout_note": "Never used for tuning. Scored separately with: python -m worldline.evaluate --heldout"
 }

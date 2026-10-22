@@ -1,0 +1,118 @@
+{
+ "clip": "canada_geese",
+ "verified": false,
+ "heldout": true,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-1.6 s, labelled before looking at the pipeline's output; not yet checked by a person.",
+ "note": "A flock of six or more geese; only four individuals are labelled and positions are approximate.",
+ "animals": [
+  {
+   "note": "goose standing upright, right",
+   "species": "goose",
+   "points": [
+    [
+     0,
+     0.79,
+     0.43
+    ],
+    [
+     5.2,
+     0.78,
+     0.43
+    ],
+    [
+     9.9,
+     0.77,
+     0.45
+    ]
+   ]
+  },
+  {
+   "note": "goose lower right",
+   "species": "goose",
+   "points": [
+    [
+     0,
+     0.82,
+     0.55
+    ],
+    [
+     4.6,
+     0.82,
+     0.55
+    ],
+    [
+     9.9,
+     0.8,
+     0.55
+    ]
+   ]
+  },
+  {
+   "note": "geese moving down and left",
+   "species": "goose",
+   "points": [
+    [
+     0,
+     0.4,
+     0.62
+    ],
+    [
+     1.9,
+     0.33,
+     0.72
+    ],
+    [
+     3.3,
+     0.3,
+     0.88
+    ],
+    [
+     5.2,
+     0.15,
+     0.92
+    ],
+    [
+     7.2,
+     0.2,
+     0.95
+    ],
+    [
+     9.9,
+     0.12,
+     0.97
+    ]
+   ]
+  },
+  {
+   "note": "goose in the middle",
+   "species": "goose",
+   "points": [
+    [
+     0,
+     0.55,
+     0.62
+    ],
+    [
+     2.6,
+     0.55,
+     0.75
+    ],
+    [
+     3.3,
+     0.62,
+     0.6
+    ],
+    [
+     6.6,
+     0.58,
+     0.65
+    ],
+    [
+     9.9,
+     0.6,
+     0.62
+    ]
+   ]
+  }
+ ]
+}

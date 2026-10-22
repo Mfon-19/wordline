@@ -1,0 +1,35 @@
+{
+ "clip": "weasel",
+ "verified": false,
+ "heldout": true,
+ "labelled_by": "Draft by Claude from frames sampled about every 0.6-1.6 s, labelled before looking at the pipeline's output; not yet checked by a person.",
+ "note": "A small dark animal crosses the bottom left quickly; empty afterwards.",
+ "animals": [
+  {
+   "note": "weasel",
+   "species": "weasel",
+   "points": [
+    [
+     0.5,
+     0.42,
+     0.7
+    ],
+    [
+     1.3,
+     0.37,
+     0.78
+    ],
+    [
+     1.9,
+     0.25,
+     0.88
+    ],
+    [
+     2.2,
+     0.2,
+     0.92
+    ]
+   ]
+  }
+ ]
+}
