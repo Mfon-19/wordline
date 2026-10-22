@@ -46,14 +46,27 @@ if aws cloudformation describe-stacks --stack-name "$STACK" >/dev/null 2>&1; the
     --parameter-overrides BundleBucket="$BUCKET" BundleKey="$CURRENT_KEY" CloudFrontPrefixList="$PREFIX_LIST"
   INSTANCE=$(aws cloudformation describe-stacks --stack-name "$STACK" --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
   echo "updating running instance $INSTANCE"
+  # SSM parameters as JSON, so the shell commands need no extra quoting
+  PARAMS=$(mktemp)
+  cat > "$PARAMS" <<JSON
+{"commands": [
+  "sed -i 's#^BUNDLE_KEY=.*#BUNDLE_KEY=$KEY#' /etc/worldline.env",
+  "/usr/local/bin/worldline-update",
+  "for i in \$(seq 60); do curl -sf -m 3 http://127.0.0.1/api/health >/dev/null && exit 0; sleep 5; done; docker logs --tail 40 worldline; exit 1"
+]}
+JSON
   CMD=$(aws ssm send-command --instance-ids "$INSTANCE" --document-name AWS-RunShellScript \
-    --parameters "commands=[\"sed -i 's#^BUNDLE_KEY=.*#BUNDLE_KEY=$KEY#' /etc/worldline.env\",\"/usr/local/bin/worldline-update\"]" \
+    --parameters "file://$PARAMS" \
     --timeout-seconds 1800 --query Command.CommandId --output text)
-  # rebuilding the image takes several minutes; poll until the command finishes
+  # rebuilding the image takes several minutes; poll until the command finishes. The command
+  # also waits for the server's health check, so a server that fails to start fails the deploy.
   while STATUS=$(aws ssm get-command-invocation --command-id "$CMD" --instance-id "$INSTANCE" --query Status --output text 2>/dev/null); \
         [ "$STATUS" = Pending ] || [ "$STATUS" = InProgress ] || [ "$STATUS" = Delayed ] || [ -z "$STATUS" ]; do sleep 15; done
   echo "update: $STATUS"
-  [ "$STATUS" = Success ]
+  if [ "$STATUS" != Success ]; then
+    aws ssm get-command-invocation --command-id "$CMD" --instance-id "$INSTANCE" --query StandardOutputContent --output text | tail -40
+    exit 1
+  fi
 else
   aws cloudformation deploy --stack-name "$STACK" --template-file deploy/worldline.yaml \
     --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
