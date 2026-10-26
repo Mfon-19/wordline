@@ -18,8 +18,6 @@ Built for the OpenCV AI Competition 2026. OpenCV 5 does the computer vision; the
 
 ![Worldline architecture: the OpenCV 5 pipeline's six stages on one Graviton4 server behind CloudFront](docs/architecture.png)
 
-([SVG version](docs/architecture.svg))
-
 | Stage | OpenCV 5 |
 |---|---|
 | Decode and sample the clip | `VideoCapture` (FFmpeg), `resize` |
@@ -134,7 +132,7 @@ web/             the viewer (index.html, app.js), label review page, bundled Thr
 scripts/         fetch_assets.py, export_megadetector.sh, embed_trial.py, serve.py, contact and label sheets
 eval/truth/      per-clip labels (animal visits as timed points, with species)
 deploy/          CloudFormation template and deploy script
-docs/            architecture diagram (PNG and SVG)
+docs/            architecture diagram
 tests/           pytest suite
 ```
 
