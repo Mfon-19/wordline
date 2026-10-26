@@ -9,4 +9,3 @@ deploy
 **/__pycache__
 uploads
 web/data/_uploads
-web/data/_agent

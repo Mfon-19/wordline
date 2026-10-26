@@ -4,9 +4,6 @@ GET  /api/health                  model and data status
 GET  /api/search?q=badger         every tube in every processed clip, best match first
 POST /api/upload                   upload a clip (raw body, X-Filename header); returns a job id
 GET  /api/upload/{id}              processing status of an upload
-POST /api/agent {question}         ask the agent; returns a run id
-GET  /api/agent/{id}               the run's status, trace, pending approval and answer
-POST /api/agent/{id}/decision      approve or decline a pending reprocessing request
 GET  /truth/{clip}.json, PUT ...  ground-truth labels, only with --labels (local use)
 GET  /                            the viewer (web/)
 
@@ -24,7 +21,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import agent, embed, uploads
+from . import embed, uploads
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "web"
@@ -35,7 +32,6 @@ MAX_QUERY = 200
 
 app = FastAPI(title="Worldline", docs_url=None, redoc_url=None)
 state = {"ready": False, "error": None, "index": {}, "mtimes": {}}
-agents = agent.Agents()
 jobs = uploads.Uploads()
 JOB = re.compile(r"^[a-z0-9]{8,32}$")
 
@@ -139,53 +135,6 @@ def upload_status(job_id: str):
     if not job:
         raise HTTPException(404, "no such upload (uploads are deleted after 24 hours)")
     return JSONResponse(job, headers={"Cache-Control": "no-store"})
-
-
-@app.post("/api/agent")
-async def ask(request: Request):
-    body = await request.json()
-    question = str(body.get("question", "")).strip()
-    if not 3 <= len(question) <= 500:
-        raise HTTPException(400, "ask a question of 3 to 500 characters")
-    if not state["ready"]:
-        raise HTTPException(503, "search model is still loading")
-    try:
-        run = agents.start(question)
-    except RuntimeError as e:
-        raise HTTPException(429, str(e))
-    return {"id": run.id}
-
-
-@app.get("/api/agent/{run_id}")
-def run_status(run_id: str):
-    run = agents.runs.get(run_id)
-    if not run:
-        raise HTTPException(404, "no such run")
-    return JSONResponse(run.view(), headers={"Cache-Control": "no-store"})
-
-
-@app.post("/api/agent/{run_id}/decision")
-async def decision(run_id: str, request: Request):
-    run = agents.runs.get(run_id)
-    if not run:
-        raise HTTPException(404, "no such run")
-    body = await request.json()
-    if not run.decide(bool(body.get("approve")), str(body.get("note", ""))):
-        raise HTTPException(409, "nothing is waiting for approval")
-    return {"ok": True}
-
-
-@app.middleware("http")
-async def cache_headers(request: Request, call_next):
-    """Code and clip lists must be fresh after a deploy; frame images can be cached for a while."""
-    response = await call_next(request)
-    path = request.url.path
-    if "cache-control" not in response.headers:
-        if path.endswith((".jpg", ".png")):
-            response.headers["Cache-Control"] = "public, max-age=3600"
-        elif not path.startswith("/api/"):
-            response.headers["Cache-Control"] = "no-cache"
-    return response
 
 
 def enable_labels():

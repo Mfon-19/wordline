@@ -36,12 +36,7 @@ def test_upload_rejects_large_and_non_video_files(api):
 def test_unknown_upload_and_run_ids(api):
     assert api.get("/api/upload/doesnotexist1").status_code == 404
     assert api.get("/api/upload/../../etc").status_code == 404
-    assert api.get("/api/agent/nope").status_code == 404
-
-
-def test_agent_question_validation(api):
-    assert api.post("/api/agent", json={"question": "x"}).status_code == 400
-    assert api.post("/api/agent", json={"question": "When did the fox arrive?"}).status_code == 503
+    assert api.post("/api/agent", json={"question": "anything"}).status_code in (404, 405)  # no agent endpoint
 
 
 def test_visitor_is_the_address_cloudfront_adds():

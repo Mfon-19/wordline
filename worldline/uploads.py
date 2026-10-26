@@ -2,7 +2,7 @@
 
 Each upload gets an unguessable id. Its results live under web/data/_uploads/<id>/ and are never
 listed in the shared clip index, so only someone with the link can open them. The source video is
-kept (for the agent's reprocessing) until the results expire.
+deleted as soon as it has been processed; the results expire after a day.
 """
 import json
 import logging
@@ -103,10 +103,6 @@ class Uploads:
         ext = Path(filename or "").suffix.lower()
         return UPLOADS / f"{secrets.token_urlsafe(12).replace('-', 'x').replace('_', 'y').lower()}{ext if ext in EXTENSIONS else '.mp4'}"
 
-    @staticmethod
-    def source(job_id):
-        return next(UPLOADS.glob(f"{job_id}.*"), None)
-
     def _worker(self):
         while True:
             job_id, src = self.todo.get()
@@ -114,7 +110,7 @@ class Uploads:
             job["status"] = "processing"
             t0 = time.time()
             try:
-                with pipeline.settings():  # one pipeline run at a time, shared with the agent
+                with pipeline.settings():  # one pipeline run at a time
                     meta = pipeline.run(src, out_dir=OUT / job_id, hide_people=True)
                 job.update(status="done", seconds=round(time.time() - t0, 1), tubes=len(meta["tracks"]),
                            people_blurred=meta["stats"]["people_hidden"])
@@ -122,6 +118,7 @@ class Uploads:
                 log.exception("upload %s failed", job_id)
                 job.update(status="error", error="Processing failed. The video may use an unusual format.")
                 shutil.rmtree(OUT / job_id, ignore_errors=True)
+            src.unlink(missing_ok=True)  # keep only the processed results, never the visitor's video
             log.info(json.dumps({"upload": job_id, "event": job["status"], "seconds": round(time.time() - t0, 1)}))
 
     def _cleaner(self):

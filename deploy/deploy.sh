@@ -27,9 +27,9 @@ if ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
 fi
 
 # The bundle is every file git tracks or would track (so uncommitted edits ship too),
-# plus the processed clip data, source clips and detector model, which git ignores.
+# plus the processed clip data and detector models, which git ignore.
 TMP=$(mktemp -d)
-{ git ls-files -co --exclude-standard; find web/data clips models -type f -not -path 'web/data/_agent/*' -not -path 'web/data/_uploads/*'; } | sort -u > "$TMP/files"
+{ git ls-files -co --exclude-standard; find web/data models -type f -not -path 'web/data/_uploads/*'; } | sort -u > "$TMP/files"
 tar -czf "$TMP/code.tar.gz" -T "$TMP/files"
 aws s3 cp "$TMP/code.tar.gz" "s3://$BUCKET/$KEY" --only-show-errors
 rm -rf "$TMP"
@@ -43,9 +43,12 @@ if aws cloudformation describe-stacks --stack-name "$STACK" >/dev/null 2>&1; the
   # change the instance's user data and restart it with a new address, breaking the CDN origin.
   CURRENT_KEY=$(aws cloudformation describe-stacks --stack-name "$STACK" \
     --query "Stacks[0].Parameters[?ParameterKey=='BundleKey'].ParameterValue" --output text)
+  # Keep the running instance's image too: a new AMI value would make CloudFormation replace it.
+  OLD_INSTANCE=$(aws cloudformation describe-stacks --stack-name "$STACK" --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
+  IMAGE=$(aws ec2 describe-instances --instance-ids "$OLD_INSTANCE" --query 'Reservations[0].Instances[0].ImageId' --output text)
   aws cloudformation deploy --stack-name "$STACK" --template-file deploy/worldline.yaml \
     --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
-    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$CURRENT_KEY" CloudFrontPrefixList="$PREFIX_LIST" InstanceType="$INSTANCE_TYPE"
+    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$CURRENT_KEY" CloudFrontPrefixList="$PREFIX_LIST" InstanceType="$INSTANCE_TYPE" ImageId="$IMAGE"
   INSTANCE=$(aws cloudformation describe-stacks --stack-name "$STACK" --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
   # a change of instance type restarts the instance; wait until SSM can reach it again
   aws ec2 wait instance-status-ok --instance-ids "$INSTANCE"
@@ -76,6 +79,7 @@ JSON
 else
   aws cloudformation deploy --stack-name "$STACK" --template-file deploy/worldline.yaml \
     --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
-    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$KEY" CloudFrontPrefixList="$PREFIX_LIST" InstanceType="$INSTANCE_TYPE"
+    --parameter-overrides BundleBucket="$BUCKET" BundleKey="$KEY" CloudFrontPrefixList="$PREFIX_LIST" InstanceType="$INSTANCE_TYPE" \
+      ImageId="$(aws ssm get-parameter --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 --query Parameter.Value --output text)"
 fi
 aws cloudformation describe-stacks --stack-name "$STACK" --query "Stacks[0].Outputs" --output table

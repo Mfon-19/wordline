@@ -16,8 +16,10 @@ Parameters:
     Default: m8g.large
     AllowedValues: [t4g.large, t4g.xlarge, m7g.large, m8g.large]
   ImageId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+    Type: AWS::EC2::Image::Id
+    Description: >
+      Amazon Linux 2023 arm64 AMI. deploy.sh passes the running instance's AMI on updates, so a newer
+      Amazon Linux release never replaces the server; a new stack gets the latest one.
   CloudFrontPrefixList:
     Type: String
     Description: Managed prefix list com.amazonaws.global.cloudfront.origin-facing
@@ -49,10 +51,6 @@ Resources:
                 Effect: Allow
                 Action: s3:GetObject
                 Resource: !Sub arn:aws:s3:::${BundleBucket}/*
-              - Sid: AskClaudeOnBedrock
-                Effect: Allow
-                Action: bedrock-mantle:CreateInference
-                Resource: "*"
               - Sid: WriteLogs
                 Effect: Allow
                 Action: [logs:CreateLogStream, logs:PutLogEvents, logs:DescribeLogStreams]
@@ -141,7 +139,7 @@ Resources:
           - PathPattern: /api/*
             TargetOriginId: server
             ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]   # the agent API takes POSTs
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]   # uploads are POSTs
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad      # Managed-CachingDisabled
             OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # Managed-AllViewerExceptHostHeader
 

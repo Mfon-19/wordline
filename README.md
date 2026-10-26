@@ -1,6 +1,6 @@
 # Worldline
 
-**See a whole camera-trap video at once.** Worldline turns a clip into a solid 3D block (picture width × height × time) and traces every animal visit through it as a coloured tube. You can see when something arrived, how long it stayed and where it went without watching the footage. You can search the tubes by typing a word ("badger", "bird on water"), upload your own clip, or ask an agent a question about the footage.
+**See a whole camera-trap video at once.** Worldline turns a clip into a solid 3D block (picture width × height × time) and traces every animal visit through it as a coloured tube. You can see when something arrived, how long it stayed and where it went without watching the footage. You can search the tubes by typing a word ("badger", "bird on water") and upload your own clip.
 
 **Live demo:** https://d3h0ll19w9xjtq.cloudfront.net
 
@@ -12,8 +12,7 @@ Built for the OpenCV AI Competition 2026. OpenCV 5 does the computer vision; the
 - **Measures each visit:** entry and exit time, dwell time, and distance moved. Visits are split correctly when a clip is several recordings joined together.
 - **Shows the clip as a block** in the browser. Drag the "now" sheet through time, click a tube to jump to that animal, and turn the block with the mouse.
 - **Searches by meaning.** Each tube is embedded with EmbeddingGemma 2 from OpenCV-cropped images of the animal. A result counts as *confident* only if the typed words fit the tube better than 26 other animal names, so "red fox" honestly reports no confident match where there is none.
-- **Accepts your own clips** (up to 60 s and 50 MB). Each upload is processed privately, reachable only through its own link and deleted after 24 hours.
-- **Agent (in progress).** Claude, through Amazon Bedrock, answers questions by searching, inspecting tubes and frames, and asking a person to approve before re-running the pipeline more sensitively. See [The agent](#the-agent).
+- **Accepts your own clips** (up to 60 s and 50 MB). Each upload is processed privately and reachable only through its own link; the video is deleted once processed and its results after 24 hours.
 
 ## How it works
 
@@ -34,7 +33,6 @@ flowchart LR
     CF[CloudFront, HTTPS] --> EC2["EC2 m8g.large, Graviton4: Docker, FastAPI"]
     EC2 --> CW[CloudWatch Logs]
     S3[(Private S3 bucket: app bundle)] --> EC2
-    EC2 -. agent .-> BR[Amazon Bedrock: Claude]
   end
   G --> EC2
   I --> EC2
@@ -51,11 +49,10 @@ flowchart LR
 | Outline each animal per frame | `grabCut`, `findContours`, `moments` |
 | Crops for search, the viewer's frame atlas, pixelating people in uploads | `resize`, `imencode`, `GaussianBlur` |
 
-The detector, search model and agent model are separate:
+The detector and the search model are separate:
 
 - **MegaDetector v5a** finds "animal / person / vehicle". It was converted to ONNX with [scripts/export_megadetector.sh](scripts/export_megadetector.sh) and is run by OpenCV.
 - **EmbeddingGemma 2** (PyTorch) supplies the vocabulary for search.
-- **Claude** (Bedrock) plans the agent's steps.
 - **YOLOX-S** is still available with `WORLDLINE_DETECTOR=yolox`, and is the fallback if the MegaDetector file is missing.
 
 ## Results so far
@@ -97,7 +94,7 @@ The first server start downloads EmbeddingGemma 2 (about 1.5 GB) from Hugging Fa
 ```bash
 .venv/bin/python -m worldline.evaluate        # scores tubes against eval/truth, writes eval/results.json
 .venv/bin/python scripts/embed_trial.py       # the species search trial, writes eval/embed_trial.json
-.venv/bin/python -m pytest                    # 33 tests
+.venv/bin/python -m pytest                    # 25 tests
 ```
 
 The tests cover:
@@ -105,8 +102,7 @@ The tests cover:
 - each OpenCV stage on synthetic video: sampling, optical flow, foreground, cut detection, the scenery filter, joining tubes, pixelation;
 - both detectors on a real frame;
 - the scoring rules;
-- the web API's refusals;
-- the agent's loop, using a scripted stand-in for the model: tool results reach the model, reprocessing waits for approval, and declines, errors and the step limit end the run cleanly.
+- the web API's refusals.
 
 Tests that need the downloaded clips or models skip themselves if those files are missing.
 
@@ -121,7 +117,7 @@ The script bundles the code, processed clips and models, and uploads the bundle 
 
 - **EC2 Graviton instance** running the server in Docker.
 - **CloudFront** as the only way in (HTTPS). The security group admits only CloudFront's address range.
-- **Instance role** limited to reading the bundle bucket, writing its log group and calling Bedrock.
+- **Instance role** limited to reading the bundle bucket and writing its log group.
 - **CloudWatch Logs**, kept for 14 days.
 - **No SSH:** administration is through SSM Session Manager.
 - **Encrypted disk** and required metadata tokens (IMDSv2).
@@ -135,29 +131,13 @@ aws cloudformation delete-stack --stack-name worldline
 aws s3 rb s3://worldline-<account-id>-us-east-1 --force
 ```
 
-## The agent
-
-[worldline/agent.py](worldline/agent.py) runs a Claude tool-use loop over five tools built on the pipeline:
-
-- `list_clips`
-- `search_footage`
-- `inspect_tube`: measurements plus three crops of the animal.
-- `view_frame`
-- `reprocess_clip`: re-runs the pipeline on a clip or time window at higher sensitivity.
-
-What the agent sees decides what it does next. A weak search result leads it to inspect frames, and a missed or broken visit leads it to request reprocessing. **Reprocessing waits for a person** to approve or decline in the viewer. Every step is recorded in a trace (shown in the viewer and logged to CloudWatch).
-
-Limits: 2 reprocessing runs and 14 model calls per question, one question at a time, and 25 questions a day.
-
-Status: the loop is implemented and tested with a scripted model. Live runs are waiting on Amazon Bedrock model access for this account. The model is set with `WORLDLINE_AGENT_MODEL` (default `anthropic.claude-opus-5-5`).
-
 ## Responsible use
 
 - **People are never tracked.** In uploaded clips, anything detected as a person is pixelated in the stored frames. The detector sometimes mistakes animals for people, so some wildlife is pixelated too; the upload panel says so. The curated clips contain no people and aren't pixelated.
 - **Uploads:**
   - Visitors must confirm they have the right to share the footage.
   - Each clip is reachable only through its own unguessable link and is never listed.
-  - Clips and results are deleted after 24 hours.
+  - The uploaded video is deleted as soon as it is processed; its results are deleted after 24 hours.
   - Limits: 60 s, 50 MB, 3 uploads per visitor per hour, 40 per day, one processed at a time.
 - **Species names come only from what the crops show,** never from the detector's labels. The search marks weak matches as not confident.
 - **Footage:** all 14 clips are from Wikimedia Commons under public-domain, CC BY or CC BY-SA licences; authors and links are in [clips/SOURCES.md](clips/SOURCES.md).
@@ -166,7 +146,7 @@ Status: the loop is implemented and tested with a scripted model. Live runs are 
 
 ```
 worldline/       pipeline.py (OpenCV stages), detector.py, embed.py (search), evaluate.py,
-                 server.py (FastAPI), uploads.py, agent.py
+                 server.py (FastAPI), uploads.py
 web/             the viewer (index.html, app.js), label review page, bundled Three.js
 scripts/         fetch_assets.py, export_megadetector.sh, embed_trial.py, serve.py, contact and label sheets
 eval/truth/      per-clip labels (animal visits as timed points, with species)
