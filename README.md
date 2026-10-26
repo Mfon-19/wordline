@@ -16,28 +16,9 @@ Built for the OpenCV AI Competition 2026. OpenCV 5 does the computer vision; the
 
 ## How it works
 
-```mermaid
-flowchart LR
-  subgraph Pipeline["Pipeline (Python, OpenCV 5)"]
-    A[VideoCapture: decode and sample] --> B[cv2.dnn: MegaDetector, every 3rd frame]
-    A --> C[Median background and per-pixel flicker: absdiff, morphology, connected components]
-    B --> D[Tracker: optical flow, calcOpticalFlowPyrLK]
-    C --> D
-    D --> E[Scenery filter, cut detection, joining broken tubes]
-    E --> F[Outlines: grabCut, findContours, moments]
-    F --> G[Measurements and frame atlas]
-    F --> H[Crops of each animal]
-  end
-  H --> I[EmbeddingGemma 2: tube vectors]
-  subgraph AWS["AWS, us-east-1"]
-    CF[CloudFront, HTTPS] --> EC2["EC2 m8g.large, Graviton4: Docker, FastAPI"]
-    EC2 --> CW[CloudWatch Logs]
-    S3[(Private S3 bucket: app bundle)] --> EC2
-  end
-  G --> EC2
-  I --> EC2
-  U[Browser: Three.js block viewer] --> CF
-```
+![Worldline architecture: the OpenCV 5 pipeline's six stages on one Graviton4 server behind CloudFront](docs/architecture.png)
+
+([SVG version](docs/architecture.svg))
 
 | Stage | OpenCV 5 |
 |---|---|
@@ -153,6 +134,7 @@ web/             the viewer (index.html, app.js), label review page, bundled Thr
 scripts/         fetch_assets.py, export_megadetector.sh, embed_trial.py, serve.py, contact and label sheets
 eval/truth/      per-clip labels (animal visits as timed points, with species)
 deploy/          CloudFormation template and deploy script
+docs/            architecture diagram (PNG and SVG)
 tests/           pytest suite
 ```
 
