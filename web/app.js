@@ -20,7 +20,9 @@ controls.enableDamping = true;
 
 // The block is drawn by ray marching: for every pixel, step along the line of sight through
 // the block, adding a little of each frame's colour (the haze). Where the line crosses the
-// "now" sheet, the frame is drawn sharp and nearly opaque.
+// "now" sheet, the frame is drawn sharp and opaque. Haze in front of the sheet is kept faint so it
+// never hides the picture, and fades when looking down the time axis, where a still bright pixel
+// would otherwise pile up into a streak.
 const volumeMaterial = new THREE.ShaderMaterial({
   glslVersion: THREE.GLSL3,
   side: THREE.BackSide,
@@ -28,7 +30,7 @@ const volumeMaterial = new THREE.ShaderMaterial({
   depthWrite: false,
   uniforms: {
     vol: { value: null }, size: { value: new THREE.Vector3(LEN, 1, WID) },
-    camPos: { value: new THREE.Vector3() }, now: { value: 0 }, haze: { value: 0.35 },
+    camPos: { value: new THREE.Vector3() }, now: { value: 0 }, haze: { value: 0.35 }, front: { value: 0.3 },
   },
   vertexShader: /* glsl */ `
     uniform vec3 size; out vec3 vPos;
@@ -36,7 +38,7 @@ const volumeMaterial = new THREE.ShaderMaterial({
     void main() { vPos = position * size; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */ `
     precision highp float; precision highp sampler3D;
-    uniform sampler3D vol; uniform vec3 size; uniform vec3 camPos; uniform float now; uniform float haze;
+    uniform sampler3D vol; uniform vec3 size; uniform vec3 camPos; uniform float now; uniform float haze; uniform float front;
     in vec3 vPos; out vec4 outColor;
     const int STEPS = 160;
     // rgb is the frame; alpha is how far the pixel is from its average over the clip, so the
@@ -56,16 +58,21 @@ const volumeMaterial = new THREE.ShaderMaterial({
       float dt = (tf - tn) / float(STEPS);
       vec4 acc = vec4(0.0);
       float t = tn;
+      bool hits = tSlice > tn && tSlice <= tf;   // this ray crosses the now sheet
+      float side = 1.0 - 0.85 * abs(dir.x);       // 0.15 looking straight down time, 1 from the side
       for (int i = 0; i < STEPS; i++) {
         float tNext = t + dt;
-        if (tSlice > t && tSlice <= tNext) {
+        if (hits && tSlice > t && tSlice <= tNext) {
           vec3 c = texture(vol, uvw(camPos + dir * tSlice)).rgb;
-          acc.rgb += (1.0 - acc.a) * 0.96 * c; acc.a += (1.0 - acc.a) * 0.96;
+          c = clamp((c - 0.45) * 1.2 + 0.5, 0.0, 1.0);   // a little more contrast than the haze
+          acc.rgb += (1.0 - acc.a) * c; acc.a = 1.0;
+          break;
         }
         vec4 s = texture(vol, uvw(camPos + dir * (t + 0.5 * dt)));
         vec3 c = s.rgb;
         float lum = dot(c, vec3(0.299, 0.587, 0.114));
-        float a = haze * dt * (0.8 * smoothstep(0.05, 0.9, lum) + 16.0 * smoothstep(0.06, 0.4, s.a));
+        float a = haze * dt * (0.8 * side * smoothstep(0.05, 0.9, lum) + 16.0 * smoothstep(0.06, 0.4, s.a));
+        if (hits) a *= front;
         acc.rgb += (1.0 - acc.a) * a * c; acc.a += (1.0 - acc.a) * a;
         if (acc.a > 0.98) break;
         t = tNext;
@@ -79,6 +86,20 @@ const frame = new THREE.LineSegments(
   new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
   new THREE.LineBasicMaterial({ color: "#3a414c" }));
 scene.add(frame);
+// The now sheet: a thin edge so it reads as a picture, and an invisible surface that only fills
+// the depth buffer, so tube parts behind the sheet are hidden (a faint ghost of them is drawn
+// separately) instead of being painted over the picture.
+const corners = [new THREE.Vector3(0, -0.5, -0.5), new THREE.Vector3(0, 0.5, -0.5),
+  new THREE.Vector3(0, 0.5, 0.5), new THREE.Vector3(0, -0.5, 0.5)];
+const nowEdge = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(corners),
+  new THREE.LineBasicMaterial({ color: "#e6e8eb", transparent: true, opacity: 0.6 }));
+const nowFill = new THREE.Mesh(new THREE.BufferGeometry().setFromPoints(corners).setIndex([0, 1, 2, 0, 2, 3]),
+  new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide, transparent: true }));
+nowFill.renderOrder = 0.5;  // after the block, before the tubes
+nowEdge.renderOrder = 2;
+const sheet = new THREE.Group();
+sheet.add(nowFill, nowEdge);
+scene.add(sheet);
 const tubes = new THREE.Group();
 const rings = new THREE.Group();
 scene.add(tubes, rings);
@@ -208,15 +229,18 @@ function buildTubes() {
     skinGeo.setIndex(idx);
     const skin = new THREE.Mesh(skinGeo, new THREE.MeshBasicMaterial({
       color, transparent: true, opacity: 0.22, side: THREE.DoubleSide,
-      depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending }));
+      depthWrite: false, blending: THREE.AdditiveBlending }));
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(line, 3));
     const ribs = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
-      color, transparent: true, opacity: 0.35, depthTest: false, blending: THREE.AdditiveBlending }));
+      color, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending }));
+    // the same tube, faint and ignoring depth, so it still shows through the now sheet
+    const ghost = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
+      color, transparent: true, opacity: 0.08, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending }));
     const g = new THREE.Group();
-    skin.renderOrder = ribs.renderOrder = 1;
-    g.add(skin, ribs);
-    g.userData = { skin, ribs };
+    skin.renderOrder = ribs.renderOrder = ghost.renderOrder = 1;
+    g.add(skin, ribs, ghost);
+    g.userData = { skin, ribs, ghost };
     tubes.add(g);
   });
 }
@@ -228,7 +252,7 @@ function updateRings(f) {
     const pts = ringPoints(tr, f - tr.start);
     pts.push(pts[0]);
     const ring = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-      new THREE.LineBasicMaterial({ color: COLORS[ti % COLORS.length], depthTest: false }));
+      new THREE.LineBasicMaterial({ color: COLORS[ti % COLORS.length], depthTest: false, transparent: true }));
     ring.renderOrder = 2;
     rings.add(ring);
   });
@@ -239,7 +263,14 @@ function setFrame(f) {
   $("scrub").value = f;
   // sample at the centre of frame f's layer in the texture
   volumeMaterial.uniforms.now.value = (Math.round(f) + 0.5) / data.frames;
+  sheet.position.x = sheetX();
+  if (view === "frame" && !fly) {
+    const dx = sheetX() - controls.target.x;
+    camera.position.x += dx;
+    controls.target.x += dx;
+  }
   $("clock").textContent = `${data.times[Math.round(f)].toFixed(1)} s`;
+  $("dur").textContent = ` / ${data.duration_s.toFixed(1)} s`;
   if (nowLabel) {
     nowLabel.userData.draw($("clock").textContent);
     nowLabel.position.set((Math.round(f) / Math.max(data.frames - 1, 1) - 0.5) * LEN, height / 2 + 0.1, WID / 2);
@@ -263,6 +294,7 @@ function restyle() {
     if (hovered === i) w = Math.max(w, 0.85);
     g.userData.skin.material.opacity = 0.03 + 0.4 * w;
     g.userData.ribs.material.opacity = 0.05 + 0.65 * w;
+    g.userData.ghost.material.opacity = 0.02 + 0.12 * w;
   });
   [...$("tracks").children].forEach((li) => {
     const i = +li.dataset.ti;
@@ -285,8 +317,9 @@ function buildPanels() {
   bars.replaceChildren();
   $("empty").hidden = data.tracks.length > 0;
   const anyConfident = search?.results.some((r) => r.confident);
-  $("tracks-title").textContent = !search ? "Animals found"
+  $("tracks-title").textContent = !search ? "Visits"
     : anyConfident ? `Matches for “${search.query}”` : `No confident match for “${search.query}”`;
+  $("tracks-count").textContent = String(data.tracks.length).padStart(2, "0");
   $("search-note").hidden = !search || anyConfident;
   $("nothing").hidden = data.tracks.length > 0;
   const order = data.tracks.map((tr, ti) => ti);
@@ -296,21 +329,21 @@ function buildPanels() {
     const li = document.createElement("li");
     li.dataset.ti = ti;
     li.style.setProperty("--c", color);
-    const title = document.createElement("b");
-    title.textContent = `Animal ${tr.id}`;
-    const when = document.createElement("small");
-    when.textContent = `In at ${tr.enter_s.toFixed(1)} s, stayed ${tr.dwell_s.toFixed(1)} s`;
-    const more = document.createElement("small");
-    more.textContent = `Moved ${(tr.path_len * 100).toFixed(0)}% of frame width` +
-      (tr.found_by === "motion" ? " · found by motion only" : "");
-    li.append(title, when, more);
+    const span = (a, b) => `left:${(a / (data.frames - 1)) * 100}%;width:${((b - a) / (data.frames - 1)) * 100}%`;
+    li.innerHTML = `<span class="sw"></span><span class="who"><b></b><small></small></span>` +
+      `<span class="num"></span><span class="num strong"></span><span class="span"><i style="${span(tr.start, tr.end)}"></i></span>`;
+    li.querySelector("b").textContent = `Animal ${tr.id}`;
+    li.querySelector("small").textContent = `moved ${(tr.path_len * 100).toFixed(0)}% of width` +
+      (tr.found_by === "motion" ? " · motion only" : "");
+    li.querySelector(".num").textContent = `${tr.enter_s.toFixed(1)}s`;
+    li.querySelector(".strong").textContent = `${tr.dwell_s.toFixed(1)}s`;
     const m = match(tr);
     if (m !== null) {
-      const bar = document.createElement("span"), fill = document.createElement("span");
+      const bar = document.createElement("span");
       bar.className = "match";
-      bar.title = `Match ${Math.round(m * 100)}%`;
-      fill.style.width = `${Math.max(3, m * 100)}%`;
-      bar.append(fill);
+      bar.innerHTML = `<span><i style="width:${Math.max(3, m * 100)}%"></i></span>`;
+      bar.append(`${Math.round(m * 100)}`.padStart(3, "\u2007"));
+      bar.title = `How well this matches, relative to the other animals`;
       li.append(bar);
     }
     li.onclick = () => select(ti);
@@ -319,14 +352,28 @@ function buildPanels() {
     bar.style.setProperty("--c", color);
     bar.style.left = `${(tr.start / (data.frames - 1)) * 100}%`;
     bar.style.width = `${((tr.end - tr.start) / (data.frames - 1)) * 100}%`;
-    bar.style.top = `${4 + (ti % 6) * 6}px`;
+    bar.style.top = `${5 + (ti % 6) * 4.4}px`;
     bars.append(bar);
   }
+  buildRuler();
   buildOthers();
   restyle();
 }
 
 // The strongest matches in clips other than the one on screen.
+// time marks under the timeline, at a round step that gives about six of them
+function buildRuler() {
+  const ruler = $("ruler"), dur = data.duration_s;
+  ruler.replaceChildren();
+  const step = [1, 2, 5, 10, 15, 30, 60].find((s) => dur / s <= 7) || 120;
+  for (let t = 0; t <= dur - step * 0.4; t += step) {
+    const mark = document.createElement("span");
+    mark.style.left = `${(t / dur) * 100}%`;
+    mark.textContent = `${t}s`;
+    ruler.append(mark);
+  }
+}
+
 function buildOthers() {
   const others = $("others");
   others.replaceChildren();
@@ -338,10 +385,10 @@ function buildOthers() {
   for (const r of rows) {
     const li = document.createElement("li"), b = document.createElement("button");
     const m = (r.score - search.lo) / (search.hi - search.lo || 1);
-    b.innerHTML = `<b></b><small></small><span class="match" style="--c:var(--accent)"><span></span></span>`;
+    b.innerHTML = `<b></b><small></small><span class="match"><span><i></i></span></span>`;
     b.querySelector("b").textContent = `${r.clip.replaceAll("_", " ")} · Animal ${r.tube}`;
-    b.querySelector("small").textContent = ` at ${r.enter_s.toFixed(1)} s`;
-    b.querySelector(".match > span").style.width = `${Math.max(3, m * 100)}%`;
+    b.querySelector("small").textContent = `${r.enter_s.toFixed(1)}s`;
+    b.querySelector(".match i").style.width = `${Math.max(3, m * 100)}%`;
     b.onclick = async () => {
       $("clip").value = r.clip;
       await load(r.clip);
@@ -373,106 +420,8 @@ async function runSearch(q) {
   }
 }
 
-// ---- Agent: ask a question, watch its steps, approve reprocessing ----
-let agentRun = null, agentTimer = null;
-
-function linkify(el, text) {
-  // clip#tube references become links that open the clip and select the tube
-  const re = /([a-z0-9_]+(?:\/[a-z0-9_]+)*)#(\d+)/g;
-  let last = 0, m;
-  while ((m = re.exec(text))) {
-    el.append(text.slice(last, m.index));
-    const a = document.createElement("a"), [ref, clip, tube] = m;
-    a.textContent = ref;
-    a.onclick = async () => {
-      if ([...$("clip").options].some((o) => o.value === clip)) $("clip").value = clip;
-      await load(clip);
-      const ti = data.tracks.findIndex((t) => t.id === +tube);
-      if (ti >= 0) select(ti);
-    };
-    el.append(a);
-    last = re.lastIndex;
-  }
-  el.append(text.slice(last));
-}
-
-function step(cls, text, extra) {
-  const li = document.createElement("li");
-  if (cls) li.className = cls;
-  linkify(li, text);
-  if (extra) li.append(extra);
-  $("steps").append(li);
-  return li;
-}
-
-function renderRun(run) {
-  $("steps").replaceChildren();
-  for (const e of run.events) {
-    if (e.kind === "model") {
-      if (e.thinking) {
-        const d = document.createElement("details"), s = document.createElement("summary");
-        s.textContent = "reasoning";
-        d.append(s, e.thinking);
-        step("", "", d);
-      }
-      if (e.text && e.calls.length) step("", e.text);
-      for (const c of e.calls) step("tool", `→ ${c.tool}(${Object.values(c.input).filter((v) => v !== null).join(", ")})`);
-    } else if (e.kind === "tool_result") {
-      step(e.error ? "err" : "", `${e.error ? "✗" : "✓"} ${e.tool}: ${e.text.slice(0, 160)}${e.images ? ` [${e.images} image${e.images > 1 ? "s" : ""}]` : ""}`);
-    } else if (e.kind === "approval") {
-      step("", e.approved ? "Approved." : `Declined: ${e.note}`);
-    } else if (e.kind === "final") {
-      step("answer", e.answer);
-    } else if (e.kind === "error" || e.kind === "stopped") {
-      step("err", run.answer || e.message || e.reason);
-    }
-  }
-  if (run.pending) {
-    const row = document.createElement("div"), yes = document.createElement("button"), no = document.createElement("button");
-    row.className = "row";
-    yes.textContent = "Approve";
-    no.textContent = "Decline";
-    const send = async (approve) => {
-      yes.disabled = no.disabled = true;
-      await fetch(`api/agent/${run.id}/decision`, { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ approve, note: approve ? "" : "declined in the viewer" }) });
-      pollRun();
-    };
-    yes.onclick = () => send(true);
-    no.onclick = () => send(false);
-    row.append(yes, no);
-    const w = run.pending.window_s.some((v) => v !== null) ? ` from ${run.pending.window_s[0] ?? 0} s to ${run.pending.window_s[1] ?? "end"}` : "";
-    step("approve", `The agent wants to re-run the OpenCV pipeline on ${run.pending.clip}${w} at ${run.pending.sensitivity} sensitivity (up to a minute of CPU). Reason: ${run.pending.reason}`, row);
-  } else if (run.status === "running") {
-    step("", "…");
-  }
-}
-
-async function pollRun() {
-  clearTimeout(agentTimer);
-  const r = await fetch(`api/agent/${agentRun}`);
-  if (!r.ok) return;
-  const run = await r.json();
-  renderRun(run);
-  $("ask-go").disabled = run.status === "running" || run.status === "awaiting_approval";
-  if (run.status === "running" || run.status === "awaiting_approval") agentTimer = setTimeout(pollRun, 1200);
-}
-
-$("ask").onsubmit = async (e) => {
-  e.preventDefault();
-  const question = $("question").value.trim();
-  if (!question) return;
-  $("steps").replaceChildren();
-  $("ask-go").disabled = true;
-  const r = await fetch("api/agent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question }) });
-  const body = await r.json();
-  if (!r.ok) { step("err", body.detail || "The agent is unavailable."); $("ask-go").disabled = false; return; }
-  agentRun = body.id;
-  pollRun();
-};
-
 const clipStatus = () =>
-  `${data.duration_s.toFixed(1)} s clip · ${data.frames} frames · ${data.tracks.length} tubes · OpenCV ${data.opencv}`;
+  `${data.frames} frames · ${data.frame_w}×${data.frame_h} · ${data.tracks.length} tubes · OpenCV ${data.opencv}`;
 
 let loadSeq = 0;  // only the most recent load() call may update the view
 
@@ -481,7 +430,7 @@ async function load(name) {
   $("status").textContent = "Loading…";
   $("loading").hidden = false;
   const t0 = performance.now();
-  playing = false; $("play").textContent = "▶"; selected = null; hovered = null;
+  playing = false; $("play").classList.remove("on"); selected = null; hovered = null;
   const base = `data/${name}`;
   let meta, vol;
   try {
@@ -502,6 +451,7 @@ async function load(name) {
   volumeMaterial.uniforms.size.value.set(LEN, height, WID);
   block.scale.set(LEN, height, WID);
   frame.scale.set(LEN, height, WID);
+  sheet.scale.set(1, height, WID);
   $("scrub").max = data.frames - 1;
   buildTubes();
   buildAxis();
@@ -612,6 +562,8 @@ document.addEventListener("keydown", (ev) => {
     $("intro").hidden = true;
   } else if (ev.key === "/") {
     $("q").focus();
+  } else if (["1", "2", "3"].includes(ev.key)) {
+    setView(["angle", "side", "frame"][+ev.key - 1]);
   } else return;
   ev.preventDefault();
 });
@@ -624,6 +576,38 @@ function showIntro(show) {
 $("intro-close").onclick = () => showIntro(false);
 $("help").onclick = () => showIntro($("intro").hidden);
 try { showIntro(!localStorage.getItem("worldline-intro-seen")); } catch { showIntro(true); }
+
+// ---- Views: an angled overview, side-on (time left to right), and facing the frame ----
+let view = "angle", fly = null;
+const sheetX = () => data ? ((Math.round(+$("scrub").value) + 0.5) / data.frames - 0.5) * LEN : 0;
+// distance at which a w x h rectangle fills about 85% of the view
+function fit(w, h) {
+  const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  return 1.15 * Math.max(h / 2 / tan, w / 2 / (tan * camera.aspect));
+}
+function viewPose(name) {
+  const V = THREE.Vector3;
+  if (name === "side") return { pos: new V(0, 0.1, fit(LEN, height) + WID / 2), target: new V(0, 0, 0) };
+  // the camera follows the now sheet, looking at it square on, like a normal video
+  if (name === "frame") return { pos: new V(sheetX() - fit(WID, height), 0, 0), target: new V(sheetX(), 0, 0) };
+  return { pos: new V(-3.3, 1.5, 3.4), target: new V(0, 0, 0) };
+}
+// no haze when facing the frame: the rays would run along time and smear into streaks
+function setHaze() {
+  volumeMaterial.uniforms.haze.value = view === "frame" ? 0 : +$("haze").value;
+  requestRender();
+}
+function setView(name) {
+  view = name;
+  tubes.visible = name !== "frame";            // in the frame view only the current outlines show
+  axis.visible = name !== "frame";
+  setHaze();
+  fly = { from: camera.position.clone(), fromT: controls.target.clone(), t0: performance.now() };
+  document.querySelectorAll("#views button").forEach((b) => b.classList.toggle("on", b.dataset.view === name));
+  requestRender();
+}
+document.querySelectorAll("#views button").forEach((b) => { b.onclick = () => setView(b.dataset.view); });
+controls.addEventListener("start", () => { fly = null; });
 
 function resize() {
   const { clientWidth: w, clientHeight: h } = canvas.parentElement;
@@ -650,6 +634,14 @@ function tick(ms) {
     }
     again = true;
   }
+  if (fly) {
+    const k = Math.min(1, (ms - fly.t0) / 600), e = 1 - (1 - k) ** 3;
+    const to = viewPose(view);
+    camera.position.lerpVectors(fly.from, to.pos, e);
+    controls.target.lerpVectors(fly.fromT, to.target, e);
+    if (k === 1) fly = null;
+    again = true;
+  }
   if (controls.update()) again = true;   // still easing after a drag
   volumeMaterial.uniforms.camPos.value.copy(camera.position);
   renderer.render(scene, camera);
@@ -664,10 +656,10 @@ for (const c of CLIPS) {
 }
 $("clip").onchange = (e) => load(e.target.value);
 $("scrub").oninput = (e) => setFrame(+e.target.value);
-$("haze").oninput = (e) => { volumeMaterial.uniforms.haze.value = +e.target.value; requestRender(); };
+$("haze").oninput = setHaze;
 $("search").onsubmit = (e) => { e.preventDefault(); runSearch($("q").value); };
 $("q").onsearch = (e) => { if (!e.target.value) runSearch(""); };
-$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "⏸" : "▶"; requestRender(); };
+$("play").onclick = () => { playing = !playing; $("play").classList.toggle("on", playing); requestRender(); };
 new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
 requestRender();

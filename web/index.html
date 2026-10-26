@@ -12,73 +12,90 @@
 </head>
 <body>
 <header>
-  <h1>Worldline</h1>
-  <select id="clip" aria-label="Clip"></select>
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 C6 14 7 6 11 6 S15 11 18 11" /><rect x="1.5" y="3.5" width="17" height="13" rx="1.5" /></svg>
+    <h1>Worldline</h1>
+  </div>
+  <label class="field clip-field">
+    <span class="field-label">Clip</span>
+    <select id="clip" aria-label="Clip"></select>
+  </label>
   <form id="search" role="search">
-    <input id="q" type="search" placeholder="Search: badger, bird on water…" aria-label="Search the footage" autocomplete="off">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></svg>
+    <input id="q" type="search" placeholder="Search animals, e.g. badger" aria-label="Search the footage" autocomplete="off">
+    <kbd>/</kbd>
   </form>
-  <label class="knob">Haze <input id="haze" type="range" min="0" max="1" step="0.01" value="0.35"></label>
-  <span id="status" role="status"></span>
-  <button id="upload-open" class="wide">Upload a clip</button>
-  <button id="help" aria-label="How to read this view">?</button>
+  <div class="tools">
+    <label class="knob">Haze <input id="haze" type="range" min="0" max="1" step="0.01" value="0.35"></label>
+    <button id="upload-open" class="ghost">Upload clip</button>
+    <button id="help" class="icon" aria-label="How to read this view">?</button>
+  </div>
 </header>
 <main>
   <div id="stage">
     <canvas id="view" aria-label="3D view of the clip: time runs left to right, each coloured tube is one animal visit"></canvas>
+    <p id="status" role="status"></p>
+    <div id="views" role="group" aria-label="View">
+      <button data-view="angle" class="on" title="Angled view (1)">3D</button>
+      <button data-view="side" title="Side view: time runs left to right (2)">Side</button>
+      <button data-view="frame" title="Face the current frame (3)">Frame</button>
+    </div>
     <div id="tip" hidden></div>
-    <div id="loading" hidden><span class="spinner"></span> Loading clip…</div>
+    <div id="loading" hidden><span class="spinner"></span> Loading clip</div>
     <p id="nothing" hidden>No animals were found in this clip.</p>
-    <form id="upload" hidden role="dialog" aria-labelledby="upload-title">
-      <h2 id="upload-title">Try your own footage</h2>
-      <p>A fixed-camera clip works best: camera traps, bird feeders, wildlife cameras. Up to 60 seconds and 50 MB.</p>
+    <form id="upload" class="sheet" hidden role="dialog" aria-labelledby="upload-title">
+      <h2 id="upload-title">Upload your own footage</h2>
+      <p>Fixed-camera clips work best: camera traps, feeders, wildlife cameras. Up to 60 seconds and 50 MB.</p>
       <input id="upload-file" type="file" accept="video/*" required>
       <label class="check"><input id="upload-agree" type="checkbox" required> I have the right to share this footage.</label>
-      <p class="small">Your clip is processed on our server, visible only through its own link, and deleted after 24 hours.
+      <p class="small">Processed on our server and visible only through its own link. The video is deleted once processed; the results after 24 hours.
         People are never tracked, and anything that looks like a person is pixelated.</p>
       <div class="row">
-        <button id="upload-go" type="submit" class="wide">Upload</button>
-        <button id="upload-cancel" type="button" class="wide">Cancel</button>
+        <button id="upload-go" type="submit" class="primary">Upload</button>
+        <button id="upload-cancel" type="button" class="ghost">Cancel</button>
       </div>
       <p id="upload-status" role="status"></p>
     </form>
-    <div id="intro" hidden role="dialog" aria-labelledby="intro-title">
-      <h2 id="intro-title">How to read this</h2>
-      <ul>
-        <li>Each block is one video clip. <b>Time runs left to right</b>; the picture is at each end.</li>
-        <li>The sharp sheet is the current moment. Drag the bar at the bottom, or press ← →, to move it.</li>
-        <li>Each <b>coloured tube is one animal's visit</b>, found and traced by OpenCV. Click one to jump to it.</li>
-        <li>Search, for example “badger”, to light up matching animals in every clip, or ask the agent a question.</li>
-      </ul>
-      <p>Drag to turn the block, scroll to zoom.</p>
-      <button id="intro-close">Got it</button>
+    <div id="intro" class="sheet" hidden role="dialog" aria-labelledby="intro-title">
+      <h2 id="intro-title">Reading the block</h2>
+      <ol>
+        <li><span><b>Time runs left to right.</b> Each block is one clip; the picture is at either end.</span></li>
+        <li><span><b>The sharp sheet is now.</b> Drag the timeline, or press ← →, to move it.</span></li>
+        <li><span><b>Each tube is one animal's visit,</b> found and traced by OpenCV. Click one to jump to it.</span></li>
+        <li><span><b>Search</b> a word, such as “badger”, to light up matches in every clip.</span></li>
+      </ol>
+      <div class="row between">
+        <span class="small">Drag to turn · scroll to zoom · 1 2 3 change view</span>
+        <button id="intro-close" class="primary">Got it</button>
+      </div>
     </div>
   </div>
   <aside>
-    <section id="agent">
-      <h2>Ask the agent</h2>
-      <form id="ask">
-        <textarea id="question" rows="2" placeholder="When did a badger first appear, and how long did it stay?" aria-label="Question for the agent"></textarea>
-        <button id="ask-go" type="submit">Ask</button>
-      </form>
-      <ol id="steps" aria-live="polite"></ol>
-    </section>
-    <h2 id="tracks-title">Animals found</h2>
-    <p id="search-note" hidden>None of the animals clearly looks like this. Showing the closest.</p>
+    <div class="aside-head">
+      <h2 id="tracks-title">Visits</h2>
+      <span id="tracks-count"></span>
+    </div>
+    <p id="search-note" hidden>Nothing clearly looks like this. Showing the closest.</p>
+    <div class="cols" aria-hidden="true"><span></span><span>Animal</span><span>In</span><span>Stayed</span></div>
     <ol id="tracks"></ol>
     <p id="empty" hidden>Nothing found in this clip.</p>
     <section id="elsewhere" hidden>
-      <h2 id="elsewhere-title">Matches in other clips</h2>
+      <div class="aside-head"><h2 id="elsewhere-title">Other clips</h2></div>
       <ol id="others"></ol>
     </section>
   </aside>
 </main>
 <footer>
-  <button id="play" aria-label="Play or pause">▶</button>
+  <button id="play" class="icon" aria-label="Play or pause">
+    <svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7-4.5z" /></svg>
+    <svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" /></svg>
+  </button>
   <div id="timeline">
     <div id="bars"></div>
+    <div id="ruler"></div>
     <input id="scrub" type="range" min="0" max="1" step="1" value="0" aria-label="Time">
   </div>
-  <output id="clock">0.0 s</output>
+  <div class="clock"><output id="clock">0.0 s</output><span id="dur"></span></div>
 </footer>
 <script type="module" src="app.js"></script>
 </body>
