@@ -2,7 +2,7 @@
 
 **See a whole camera-trap video at once.** Worldline turns a clip into a solid 3D block (picture width × height × time) and traces every animal visit through it as a coloured tube. You can see when something arrived, how long it stayed and where it went without watching the footage. You can search the tubes by typing a word ("badger", "bird on water") and upload your own clip.
 
-**Live demo:** https://d3h0ll19w9xjtq.cloudfront.net
+**Live demo:** https://d3h0ll19w9xjtq.cloudfront.net · **Video (4 min):** https://youtu.be/UFovwwtCcCQ
 
 Built for the OpenCV AI Competition 2026. OpenCV 5 does the computer vision; the app runs on AWS Graviton.
 
@@ -57,7 +57,9 @@ The detector and the search model are separate:
 
 ## Results so far
 
-14 openly licensed clips with 21 animal visits, scored by [worldline/evaluate.py](worldline/evaluate.py) against labels in `eval/truth/`. **The labels are drafts still being checked by a person, and the thresholds were tuned on these same clips, so treat these as development numbers.** Held-out results will be added.
+14 openly licensed clips with 21 animal visits, scored by [worldline/evaluate.py](worldline/evaluate.py) against labels in `eval/truth/`. **The labels are drafts still being checked by a person, and the thresholds were tuned on these same clips, so treat these as development numbers.**
+
+**Held-out set:** 6 further clips, frozen before the pipeline ever saw them (commit `bd2cc97`), scored with `python -m worldline.evaluate --heldout`: 16 of 17 animal visits found, at least 62% of tubes are real animals, and the right species name comes first for 78% of tubes, in line with the development clips.
 
 | | MegaDetector (default) | YOLOX-S |
 |---|---|---|
