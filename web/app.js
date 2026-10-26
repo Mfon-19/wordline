@@ -245,6 +245,7 @@ function setFrame(f) {
     nowLabel.position.set((Math.round(f) / Math.max(data.frames - 1, 1) - 0.5) * LEN, height / 2 + 0.1, WID / 2);
   }
   updateRings(Math.round(f));
+  requestRender();
 }
 
 // How well a tube matches the current search, from 0 to 1 (unconfident matches are capped low), or null.
@@ -268,6 +269,7 @@ function restyle() {
     li.classList.toggle("on", selected === i);
     li.classList.toggle("off", selected !== null && selected !== i);
   });
+  requestRender();
 }
 
 function select(ti) {
@@ -628,18 +630,32 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
+  requestRender();
+}
+
+// Draw only when something changed: ray marching the block is heavy, and redrawing it 60 times
+// a second while nothing moves keeps a laptop's GPU busy for no reason.
+let frameRequested = false;
+function requestRender() {
+  if (!frameRequested) { frameRequested = true; requestAnimationFrame(tick); }
 }
 
 function tick(ms) {
-  if (playing && data && ms - lastTick > 1000 * (data.duration_s / data.frames)) {
-    lastTick = ms;
-    setFrame((+$("scrub").value + 1) % data.frames);
+  frameRequested = false;
+  let again = false;
+  if (playing && data) {
+    if (ms - lastTick > 1000 * (data.duration_s / data.frames)) {
+      lastTick = ms;
+      setFrame((+$("scrub").value + 1) % data.frames);
+    }
+    again = true;
   }
-  controls.update();
+  if (controls.update()) again = true;   // still easing after a drag
   volumeMaterial.uniforms.camPos.value.copy(camera.position);
   renderer.render(scene, camera);
-  requestAnimationFrame(tick);
+  if (again) requestRender();
 }
+controls.addEventListener("change", requestRender);
 
 const CLIPS = await (await fetch("data/index.json")).json();
 for (const c of CLIPS) {
@@ -648,13 +664,13 @@ for (const c of CLIPS) {
 }
 $("clip").onchange = (e) => load(e.target.value);
 $("scrub").oninput = (e) => setFrame(+e.target.value);
-$("haze").oninput = (e) => { volumeMaterial.uniforms.haze.value = +e.target.value; };
+$("haze").oninput = (e) => { volumeMaterial.uniforms.haze.value = +e.target.value; requestRender(); };
 $("search").onsubmit = (e) => { e.preventDefault(); runSearch($("q").value); };
 $("q").onsearch = (e) => { if (!e.target.value) runSearch(""); };
-$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "⏸" : "▶"; };
+$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "⏸" : "▶"; requestRender(); };
 new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
-requestAnimationFrame(tick);
+requestRender();
 const shared = location.hash.match(/^#u=([a-z0-9]{8,32})$/);
 if (shared) {
   $("upload").hidden = false;

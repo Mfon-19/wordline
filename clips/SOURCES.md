@@ -18,3 +18,16 @@ Downloaded from Wikimedia Commons on 2026-10-04 with `scripts/fetch_assets.py`. 
 | roe_deer_male | Neli St Ivanova - Сдружение за дива природа БАЛКАНИ | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File%3ACapreolus_capreolus-roe_deer-Bulgaria-male_VP8.webm |
 | small_mammals | Glen A, Cockburn S, Nichols M, Ekanayake J, Warburton B | CC BY 2.5 | https://commons.wikimedia.org/wiki/File%3AOptimising-Camera-Traps-for-Monitoring-Small-Mammals-pone.0067940.s002.ogv |
 | wild_boars | Нели Иванова - Сдружение за дива природа БАЛКАНИ | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File%3ASus_scrofa-wild_boars-Bulgaria_VP8.webm |
+
+## Held-out clips
+
+Never used for tuning; see `eval/truth_heldout/`. Downloaded from Wikimedia Commons on 2026-10-22.
+
+| Clip | Author | Licence | Source |
+|---|---|---|---|
+| beavers | USFWS Pacific Southwest Region | Public domain | https://commons.wikimedia.org/wiki/File%3ADoty_Ravine_trail_cam_-_beaver_wrestling.webm |
+| canada_geese | USFWS Mountain Prairie | Public domain | https://commons.wikimedia.org/wiki/File%3ACanada_Geese_on_Trail_Camera_%2850222797812%29.webm |
+| florida_panther | U.S. Fish & Wildlife Service | Public domain | https://commons.wikimedia.org/wiki/File%3AFlorida_Panther_Trail_cam.webm |
+| gray_fox | Andy | CC BY 3.0 | https://commons.wikimedia.org/wiki/File%3AGray_fox_%28Urocyon_cinereoargenteus%29_in_New_Mexico.webm |
+| weasel | USFWS Mountain-Prairie | Public domain | https://commons.wikimedia.org/wiki/File%3AWeasel_on_Trail_Camera.webm |
+| wolf | USFWS Mountain-Prairie | Public domain | https://commons.wikimedia.org/wiki/File%3AWolf_on_Trail_Camera.webm |
